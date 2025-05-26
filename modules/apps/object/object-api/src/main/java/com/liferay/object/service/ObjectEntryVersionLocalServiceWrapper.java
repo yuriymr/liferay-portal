@@ -56,6 +56,14 @@ public class ObjectEntryVersionLocalServiceWrapper
 			objectEntryVersion);
 	}
 
+	@Override
+	public void checkObjectEntryRetention(long objectEntryId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		_objectEntryVersionLocalService.checkObjectEntryRetention(
+			objectEntryId);
+	}
+
 	/**
 	 * Creates a new object entry version with the primary key. Does not add the object entry version to the database.
 	 *

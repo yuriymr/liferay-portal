@@ -72,6 +72,9 @@ public interface ObjectEntryVersionLocalService
 	public ObjectEntryVersion addObjectEntryVersion(
 		ObjectEntryVersion objectEntryVersion);
 
+	public void checkObjectEntryRetention(long objectEntryId)
+		throws PortalException;
+
 	/**
 	 * Creates a new object entry version with the primary key. Does not add the object entry version to the database.
 	 *
