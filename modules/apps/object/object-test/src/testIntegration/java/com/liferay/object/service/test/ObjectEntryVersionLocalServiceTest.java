@@ -7,6 +7,9 @@ package com.liferay.object.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.counter.kernel.service.CounterLocalService;
+import com.liferay.journal.configuration.JournalServiceConfiguration;
+import com.liferay.object.configuration.ObjectConfiguration;
+import com.liferay.object.configuration.ObjectEntryVersionRetentionConfiguration;
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.constants.ObjectEntryFolderConstants;
 import com.liferay.object.exception.RequiredObjectEntryVersionException;
@@ -19,6 +22,7 @@ import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectEntryVersionLocalService;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -29,6 +33,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.model.WorkflowDefinitionLink;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkService;
@@ -40,6 +45,7 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -55,6 +61,9 @@ import com.liferay.portal.workflow.manager.WorkflowDefinitionManager;
 
 import java.io.Serializable;
 
+import java.sql.Date;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -564,6 +573,112 @@ public class ObjectEntryVersionLocalServiceTest {
 				objectEntry.getObjectEntryId()));
 	}
 
+	@Test
+	public void testObjectEntryVersionRetention()
+		throws Exception {
+		ObjectEntry objectEntry = ObjectEntryTestUtil.addObjectEntry(
+			0, _objectDefinition.getObjectDefinitionId(),
+			HashMapBuilder.<String, Serializable>put(
+				"textObjectFieldName", RandomTestUtil.randomString()
+			).build());
+
+		ObjectEntryVersion objectEntryVersion = _objectEntryVersionLocalService.getObjectEntryVersion(objectEntry.getObjectEntryId(),objectEntry.getVersion());
+
+		objectEntryVersion.setCreateDate(
+			java.util.Date.from(
+				LocalDate.now(
+				).minusMonths(
+					3
+				).atStartOfDay(
+					ZoneId.systemDefault()
+				).toInstant()));
+
+		objectEntryVersion = _objectEntryVersionLocalService.updateObjectEntryVersion(objectEntryVersion);
+
+		objectEntry = _objectEntryLocalService.updateObjectEntry(
+			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			HashMapBuilder.<String, Serializable>put(
+				"textObjectFieldName", RandomTestUtil.randomString()
+			).build(),
+			ServiceContextTestUtil.getServiceContext());
+
+		objectEntryVersion = _objectEntryVersionLocalService.getObjectEntryVersion(objectEntry.getObjectEntryId(),objectEntry.getVersion());
+
+		objectEntryVersion.setCreateDate(
+			java.util.Date.from(
+				LocalDate.now(
+				).minusMonths(
+					2
+				).atStartOfDay(
+					ZoneId.systemDefault()
+				).toInstant()));
+
+		objectEntryVersion = _objectEntryVersionLocalService.updateObjectEntryVersion(objectEntryVersion);
+
+		objectEntry = _objectEntryLocalService.updateObjectEntry(
+			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			HashMapBuilder.<String, Serializable>put(
+				"textObjectFieldName", RandomTestUtil.randomString()
+			).build(),
+			ServiceContextTestUtil.getServiceContext());
+
+		objectEntry.setCreateDate(Date.valueOf(LocalDate.now()));
+
+		objectEntry = _objectEntryLocalService.updateObjectEntry(
+			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			HashMapBuilder.<String, Serializable>put(
+				"textObjectFieldName", RandomTestUtil.randomString()
+			).build(),
+			ServiceContextTestUtil.getServiceContext());
+
+		objectEntry.setCreateDate(Date.valueOf(LocalDate.now().minusDays(20)));
+
+		objectEntry = _objectEntryLocalService.updateObjectEntry(
+			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			HashMapBuilder.<String, Serializable>put(
+				"textObjectFieldName", RandomTestUtil.randomString()
+			).build(),
+			ServiceContextTestUtil.getServiceContext());
+
+		objectEntry.setCreateDate(Date.valueOf(LocalDate.now().minusDays(15)));
+
+		objectEntry = _objectEntryLocalService.updateObjectEntry(objectEntry);
+
+		Assert.assertEquals(
+			5,
+			_objectEntryVersionLocalService.getObjectEntryVersionsCount(
+				objectEntry.getObjectEntryId()));
+
+
+		_configurationProvider.saveCompanyConfiguration(
+			ObjectEntryVersionRetentionConfiguration.class, TestPropsValues.getCompanyId(),
+			HashMapDictionaryBuilder.<String, Object>put(
+				"maximumEntryVersionsNumber", 4
+			).put(
+				"maximumRetentionPeriod", 1
+			).build());
+
+		ObjectEntryVersionRetentionConfiguration _objectEntryVersionRetentionConfiguration =
+			_configurationProvider.getCompanyConfiguration(
+				ObjectEntryVersionRetentionConfiguration.class,
+				CompanyThreadLocal.getCompanyId());
+
+		int maximumVersionsNumber = _objectEntryVersionRetentionConfiguration.maximumEntryVersionsNumber();
+		int maximumRetentionPeriod = _objectEntryVersionRetentionConfiguration.maximumRetentionPeriod();
+
+		Assert.assertEquals(4, maximumVersionsNumber);
+
+		Assert.assertEquals(1, maximumRetentionPeriod);
+
+		_objectEntryVersionLocalService.checkObjectEntryRetention(
+			objectEntry.getObjectEntryId());
+
+		Assert.assertEquals(
+			3,
+			_objectEntryVersionLocalService.getObjectEntryVersionsCount(
+				objectEntry.getObjectEntryId()));
+	}
+
 	private void _assertEquals(
 			List<ObjectEntryVersion> expectedObjectEntryVersions,
 			List<ObjectEntryVersion> actualObjectEntryVersions)
@@ -644,6 +759,9 @@ public class ObjectEntryVersionLocalServiceTest {
 
 		return objectEntryVersion;
 	}
+
+	@Inject
+	private ConfigurationProvider _configurationProvider;
 
 	private static ObjectDefinition _objectDefinition;
 

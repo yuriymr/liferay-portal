@@ -5,6 +5,7 @@
 
 package com.liferay.object.service.impl;
 
+import com.liferay.object.configuration.ObjectEntryVersionRetentionConfiguration;
 import com.liferay.object.entry.util.ObjectEntryDTOConverterUtil;
 import com.liferay.object.exception.RequiredObjectEntryVersionException;
 import com.liferay.object.model.ObjectEntry;
@@ -12,13 +13,21 @@ import com.liferay.object.model.ObjectEntryVersion;
 import com.liferay.object.service.base.ObjectEntryVersionLocalServiceBaseImpl;
 import com.liferay.object.util.comparator.ObjectEntryVersionVersionComparator;
 import com.liferay.portal.aop.AopService;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -44,6 +53,37 @@ public class ObjectEntryVersionLocalServiceImpl
 			objectEntryVersionPersistence.create(
 				counterLocalService.increment()),
 			objectEntry.getVersion() + 1);
+	}
+
+	public void checkObjectEntryRetention(long objectEntryId)
+		throws PortalException {
+
+		List<ObjectEntryVersion> versions = new ArrayList<>(getObjectEntryVersions(objectEntryId));
+
+
+		if (_checkMaximumObjectEntryVersions(objectEntryId)) {
+			ObjectEntryVersion oldestVersion = versions.stream(
+			).min(
+				Comparator.comparing(ObjectEntryVersion::getCreateDate)
+			).orElse(
+				null
+			);
+
+			if (oldestVersion != null) {
+				deleteObjectEntryVersion(
+					objectEntryId, oldestVersion.getVersion());
+			}
+
+			versions.remove(oldestVersion);
+		}
+
+		for (ObjectEntryVersion version : versions) {
+			if (_checkVersionRetentionPeriod(
+					objectEntryId, version.getVersion())) {
+
+				deleteObjectEntryVersion(objectEntryId, version.getVersion());
+			}
+		}
 	}
 
 	@Override
@@ -159,6 +199,63 @@ public class ObjectEntryVersionLocalServiceImpl
 			objectEntry.getVersion());
 	}
 
+	private boolean _checkMaximumObjectEntryVersions(long objectEntryId)
+		throws ConfigurationException {
+
+		boolean exceededVersionsNumber = false;
+
+		int versionsAmount = getObjectEntryVersionsCount(objectEntryId);
+
+		if (versionsAmount <= 0) {
+			return exceededVersionsNumber;
+		}
+
+		ObjectEntryVersionRetentionConfiguration _objectEntryVersionRetentionConfiguration =
+			_configurationProvider.getCompanyConfiguration(
+				ObjectEntryVersionRetentionConfiguration.class,
+				CompanyThreadLocal.getCompanyId());
+
+		int allowedVersionsAmount =
+			_objectEntryVersionRetentionConfiguration.
+				maximumEntryVersionsNumber();
+
+		if (versionsAmount > allowedVersionsAmount) {
+			exceededVersionsNumber = true;
+		}
+
+		return exceededVersionsNumber;
+	}
+
+	private boolean _checkVersionRetentionPeriod(
+			long objectEntryId, int version)
+		throws PortalException {
+
+		ObjectEntryVersion objectEntryVersion = getObjectEntryVersion(
+			objectEntryId, version);
+
+		Date createdDate = objectEntryVersion.getCreateDate();
+
+		ObjectEntryVersionRetentionConfiguration _objectEntryVersionRetentionConfiguration =
+			_configurationProvider.getCompanyConfiguration(
+				ObjectEntryVersionRetentionConfiguration.class,
+				CompanyThreadLocal.getCompanyId());
+
+		int retentionPeriod =
+			_objectEntryVersionRetentionConfiguration.maximumRetentionPeriod();
+
+		LocalDate createdLocalDate = createdDate.toInstant(
+		).atZone(
+			ZoneId.systemDefault()
+		).toLocalDate();
+
+		LocalDate currentDate = LocalDate.now();
+
+		LocalDate retentionEndDate = createdLocalDate.plusMonths(
+			retentionPeriod);
+
+		return currentDate.isAfter(retentionEndDate);
+	}
+
 	private ObjectEntryVersion _updateObjectEntryVersion(
 			ObjectEntry objectEntry, ObjectEntryVersion objectEntryVersion,
 			int version)
@@ -208,6 +305,9 @@ public class ObjectEntryVersionLocalServiceImpl
 
 		return objectEntryVersionPersistence.update(objectEntryVersion);
 	}
+
+	@Reference
+	private ConfigurationProvider _configurationProvider;
 
 	@Reference
 	private DTOConverterRegistry _dtoConverterRegistry;
