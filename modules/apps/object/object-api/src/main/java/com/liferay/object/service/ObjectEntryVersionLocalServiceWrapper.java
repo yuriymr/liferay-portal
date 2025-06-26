@@ -287,6 +287,16 @@ public class ObjectEntryVersionLocalServiceWrapper
 	}
 
 	@Override
+	public void expireObjectEntryVersions(
+			com.liferay.portal.kernel.service.ServiceContext serviceContext,
+			long userId, com.liferay.object.model.ObjectEntry objectEntry)
+		throws Exception {
+
+		_objectEntryVersionLocalService.expireObjectEntryVersions(
+			serviceContext, userId, objectEntry);
+	}
+
+	@Override
 	public com.liferay.object.model.ObjectEntryVersion fetchObjectEntryVersion(
 		long objectEntryVersionId) {
 
