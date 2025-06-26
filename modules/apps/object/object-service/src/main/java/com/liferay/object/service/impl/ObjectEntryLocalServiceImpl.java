@@ -817,15 +817,6 @@ public class ObjectEntryLocalServiceImpl
 			userId, objectEntry, WorkflowConstants.STATUS_EXPIRED,
 			serviceContext);
 
-		List<ObjectEntryVersion> objectEntryVersions =
-			_objectEntryVersionLocalService.getObjectEntryVersions(
-				objectEntry.getObjectEntryId());
-
-		for (ObjectEntryVersion objectEntryVersion : objectEntryVersions) {
-			_objectEntryVersionLocalService.expireObjectEntryVersion(
-				userId, objectEntryVersion);
-		}
-
 		return objectEntry;
 	}
 

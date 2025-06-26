@@ -402,12 +402,17 @@ public class DefaultObjectEntryManagerImpl
 			DTOConverterContext dtoConverterContext, long objectEntryId)
 		throws Exception {
 
-		com.liferay.object.model.ObjectEntry objectEntry =
+		com.liferay.object.model.ObjectEntry serviceBuilderObjectEntry =
 			_objectEntryService.expireObjectEntry(
 				dtoConverterContext.getUserId(), objectEntryId,
 				ServiceContextUtil.createServiceContext(objectEntryId));
 
-		return _objectEntryDTOConverter.toDTO(dtoConverterContext, objectEntry);
+		_objectEntryVersionService.expireObjectEntryVersions(
+			ServiceContextUtil.createServiceContext(objectEntryId),
+			dtoConverterContext.getUserId(), serviceBuilderObjectEntry);
+
+		return _objectEntryDTOConverter.toDTO(
+			dtoConverterContext, serviceBuilderObjectEntry);
 	}
 
 	@Override
@@ -416,9 +421,16 @@ public class DefaultObjectEntryManagerImpl
 			ObjectDefinition objectDefinition, long objectEntryId, int version)
 		throws Exception {
 
+		com.liferay.object.model.ObjectEntry serviceBuilderObjectEntry =
+			_objectEntryService.getObjectEntry(objectEntryId);
+
+		if (serviceBuilderObjectEntry.getVersion() == version) {
+			expireObjectEntry(dtoConverterContext, objectEntryId);
+		}
+
 		return _expireObjectEntryVersion(
-			dtoConverterContext, objectDefinition,
-			_objectEntryService.getObjectEntry(objectEntryId), version);
+			dtoConverterContext, objectDefinition, serviceBuilderObjectEntry,
+			version);
 	}
 
 	@Override
@@ -427,6 +439,17 @@ public class DefaultObjectEntryManagerImpl
 			String externalReferenceCode, ObjectDefinition objectDefinition,
 			int version)
 		throws Exception {
+
+		com.liferay.object.model.ObjectEntry serviceBuilderObjectEntry =
+			_objectEntryService.getObjectEntry(
+				externalReferenceCode, objectDefinition.getCompanyId(),
+				getGroupId(objectDefinition, null));
+
+		if (serviceBuilderObjectEntry.getVersion() == version) {
+			expireObjectEntry(
+				dtoConverterContext,
+				serviceBuilderObjectEntry.getObjectEntryId());
+		}
 
 		return _expireObjectEntryVersion(
 			dtoConverterContext, objectDefinition,
