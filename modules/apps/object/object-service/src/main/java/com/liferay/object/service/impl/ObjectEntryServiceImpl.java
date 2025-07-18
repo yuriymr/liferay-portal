@@ -188,6 +188,17 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 	}
 
 	@Override
+	public void deleteTrashEntry(ObjectEntry objectEntry)
+		throws PortalException {
+
+		_checkPermission(
+			ActionKeys.DELETE, objectEntry.getObjectDefinitionId(),
+			objectEntry);
+
+		objectEntryLocalService.deleteTrashEntry(objectEntry);
+	}
+
+	@Override
 	public ObjectEntry expireObjectEntry(
 			long userId, long objectEntryId, ServiceContext serviceContext)
 		throws PortalException {
@@ -420,6 +431,19 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 
 		return portletResourcePermission.contains(
 			getPermissionChecker(), groupId, actionId);
+	}
+
+	@Override
+	public ObjectEntry moveEntryToTrash(
+			long userId, ObjectEntry objectEntry, ServiceContext serviceContext)
+		throws PortalException {
+
+		_checkPermission(
+			ActionKeys.DELETE, objectEntry.getObjectDefinitionId(),
+			objectEntry);
+
+		return objectEntryLocalService.moveEntryToTrash(
+			userId, objectEntry, serviceContext);
 	}
 
 	@Override
