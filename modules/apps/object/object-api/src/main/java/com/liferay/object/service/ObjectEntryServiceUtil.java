@@ -77,6 +77,12 @@ public class ObjectEntryServiceUtil {
 			externalReferenceCode, companyId, groupId);
 	}
 
+	public static void deleteTrashEntry(ObjectEntry objectEntry)
+		throws PortalException {
+
+		getService().deleteTrashEntry(objectEntry);
+	}
+
 	public static ObjectEntry expireObjectEntry(
 			long userId, long objectEntryId,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
@@ -208,6 +214,15 @@ public class ObjectEntryServiceUtil {
 
 		return getService().hasPortletResourcePermission(
 			groupId, objectDefinitionId, actionId);
+	}
+
+	public static ObjectEntry moveEntryToTrash(
+			long userId, ObjectEntry objectEntry,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
+
+		return getService().moveEntryToTrash(
+			userId, objectEntry, serviceContext);
 	}
 
 	public static ObjectEntry partialUpdateObjectEntry(

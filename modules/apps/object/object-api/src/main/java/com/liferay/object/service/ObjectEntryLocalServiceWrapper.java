@@ -207,6 +207,13 @@ public class ObjectEntryLocalServiceWrapper
 	}
 
 	@Override
+	public void deleteTrashEntry(
+		com.liferay.object.model.ObjectEntry objectEntry) {
+
+		_objectEntryLocalService.deleteTrashEntry(objectEntry);
+	}
+
+	@Override
 	public <T> T dslQuery(com.liferay.petra.sql.dsl.query.DSLQuery dslQuery) {
 		return _objectEntryLocalService.dslQuery(dslQuery);
 	}
@@ -765,6 +772,16 @@ public class ObjectEntryLocalServiceWrapper
 
 		_objectEntryLocalService.insertIntoOrUpdateExtensionTable(
 			userId, objectDefinitionId, primaryKey, values);
+	}
+
+	@Override
+	public com.liferay.object.model.ObjectEntry moveEntryToTrash(
+			long userId, com.liferay.object.model.ObjectEntry objectEntry,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _objectEntryLocalService.moveEntryToTrash(
+			userId, objectEntry, serviceContext);
 	}
 
 	@Override

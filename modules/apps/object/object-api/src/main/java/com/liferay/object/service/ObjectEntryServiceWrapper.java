@@ -78,6 +78,14 @@ public class ObjectEntryServiceWrapper
 	}
 
 	@Override
+	public void deleteTrashEntry(
+			com.liferay.object.model.ObjectEntry objectEntry)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		_objectEntryService.deleteTrashEntry(objectEntry);
+	}
+
+	@Override
 	public com.liferay.object.model.ObjectEntry expireObjectEntry(
 			long userId, long objectEntryId,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
@@ -231,6 +239,16 @@ public class ObjectEntryServiceWrapper
 
 		return _objectEntryService.hasPortletResourcePermission(
 			groupId, objectDefinitionId, actionId);
+	}
+
+	@Override
+	public com.liferay.object.model.ObjectEntry moveEntryToTrash(
+			long userId, com.liferay.object.model.ObjectEntry objectEntry,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _objectEntryService.moveEntryToTrash(
+			userId, objectEntry, serviceContext);
 	}
 
 	@Override

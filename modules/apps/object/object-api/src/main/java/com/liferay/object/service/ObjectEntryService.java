@@ -72,6 +72,9 @@ public interface ObjectEntryService extends BaseService {
 			String externalReferenceCode, long companyId, long groupId)
 		throws PortalException;
 
+	public void deleteTrashEntry(ObjectEntry objectEntry)
+		throws PortalException;
+
 	public ObjectEntry expireObjectEntry(
 			long userId, long objectEntryId, ServiceContext serviceContext)
 		throws PortalException;
@@ -153,6 +156,10 @@ public interface ObjectEntryService extends BaseService {
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public boolean hasPortletResourcePermission(
 			long groupId, long objectDefinitionId, String actionId)
+		throws PortalException;
+
+	public ObjectEntry moveEntryToTrash(
+			long userId, ObjectEntry objectEntry, ServiceContext serviceContext)
 		throws PortalException;
 
 	public ObjectEntry partialUpdateObjectEntry(

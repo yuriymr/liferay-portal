@@ -166,6 +166,8 @@ public interface ObjectEntryLocalService
 			long groupId, long objectDefinitionId, long primaryKey)
 		throws PortalException;
 
+	public void deleteTrashEntry(ObjectEntry objectEntry);
+
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public <T> T dslQuery(DSLQuery dslQuery);
 
@@ -495,6 +497,10 @@ public interface ObjectEntryLocalService
 	public void insertIntoOrUpdateExtensionTable(
 			long userId, long objectDefinitionId, long primaryKey,
 			Map<String, Serializable> values)
+		throws PortalException;
+
+	public ObjectEntry moveEntryToTrash(
+			long userId, ObjectEntry objectEntry, ServiceContext serviceContext)
 		throws PortalException;
 
 	public ObjectEntry partialUpdateObjectEntry(

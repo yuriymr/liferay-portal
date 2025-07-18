@@ -192,6 +192,10 @@ public class ObjectEntryLocalServiceUtil {
 			groupId, objectDefinitionId, primaryKey);
 	}
 
+	public static void deleteTrashEntry(ObjectEntry objectEntry) {
+		getService().deleteTrashEntry(objectEntry);
+	}
+
 	public static <T> T dslQuery(DSLQuery dslQuery) {
 		return getService().dslQuery(dslQuery);
 	}
@@ -667,6 +671,15 @@ public class ObjectEntryLocalServiceUtil {
 
 		getService().insertIntoOrUpdateExtensionTable(
 			userId, objectDefinitionId, primaryKey, values);
+	}
+
+	public static ObjectEntry moveEntryToTrash(
+			long userId, ObjectEntry objectEntry,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
+		throws PortalException {
+
+		return getService().moveEntryToTrash(
+			userId, objectEntry, serviceContext);
 	}
 
 	public static ObjectEntry partialUpdateObjectEntry(
