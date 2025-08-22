@@ -103,8 +103,8 @@ export default function SpaceGeneralSettings({
 						.filter((mimeTypeLimit) =>
 							Object.values(mimeTypeLimit).some((value) => value)
 						),
-					trashEnabled,
 					sharingEnabled,
+					trashEnabled,
 					trashEntriesMaxAge,
 				},
 			});
