@@ -116,16 +116,21 @@ public class AssetLibraryResourceTest extends BaseAssetLibraryResourceTestCase {
 		};
 		boolean sharingEnabled = true;
 		boolean useCustomLanguages = true;
+		boolean trashEnabled = true;
+		int trashEntriesMaxAge = 1234;
 
 		AssetLibrary assetLibrary = _postAssetLibraryWithSettings(
 			true, availableLanguageIds, defaultLanguageId, logoColor,
-			mimeTypeLimits, sharingEnabled, useCustomLanguages);
+			mimeTypeLimits, sharingEnabled, useCustomLanguages, trashEnabled,
+			trashEntriesMaxAge);
 
 		boolean autoTaggingEnabled = false;
 
 		Settings settings = new Settings();
 
 		settings.setAutoTaggingEnabled(autoTaggingEnabled);
+		settings.setTrashEnabled(trashEnabled);
+		settings.setTrashEntriesMaxAge(trashEntriesMaxAge);
 
 		assetLibrary.setSettings(settings);
 
@@ -135,7 +140,7 @@ public class AssetLibraryResourceTest extends BaseAssetLibraryResourceTestCase {
 		_assertSettings(
 			assetLibrary, autoTaggingEnabled, availableLanguageIds,
 			defaultLanguageId, logoColor, mimeTypeLimits, sharingEnabled,
-			useCustomLanguages);
+			useCustomLanguages, trashEnabled, trashEntriesMaxAge);
 
 		settings = new Settings();
 
@@ -149,7 +154,7 @@ public class AssetLibraryResourceTest extends BaseAssetLibraryResourceTestCase {
 		_assertSettings(
 			assetLibrary, autoTaggingEnabled, availableLanguageIds,
 			defaultLanguageId, logoColor, new MimeTypeLimit[0], sharingEnabled,
-			useCustomLanguages);
+			useCustomLanguages, trashEnabled, trashEntriesMaxAge);
 	}
 
 	@Override
@@ -227,6 +232,26 @@ public class AssetLibraryResourceTest extends BaseAssetLibraryResourceTestCase {
 					autoTaggingEnabled = false;
 					logoColor = "color-1";
 					sharingEnabled = false;
+					useCustomLanguages = false;
+				}
+			});
+
+		return assetLibrary;
+	}
+
+	protected AssetLibrary randomAssetLibraryWithRecycleBinEnabled()
+		throws Exception {
+
+		AssetLibrary assetLibrary = super.randomAssetLibrary();
+
+		assetLibrary.setSettings(
+			new Settings() {
+				{
+					autoTaggingEnabled = false;
+					logoColor = "color-1";
+					sharingEnabled = false;
+					trashEnabled = true;
+					trashEntriesMaxAge = 1234;
 					useCustomLanguages = false;
 				}
 			});
@@ -399,7 +424,8 @@ public class AssetLibraryResourceTest extends BaseAssetLibraryResourceTestCase {
 		AssetLibrary assetLibrary, boolean expectedAutoTaggingEnabled,
 		String[] expectedAvailableLanguageIds, String expectedDefaultLanguageId,
 		String expectedLogoColor, MimeTypeLimit[] expectedMimeTypeLimits,
-		boolean expectedSharingEnabled, boolean expectedUseCustomLanguages) {
+		boolean expectedSharingEnabled, boolean expectedUseCustomLanguages,
+		boolean expectedTrashEnabled, int expectedTrashEntriesMaxAge) {
 
 		Settings settings = assetLibrary.getSettings();
 
@@ -428,6 +454,9 @@ public class AssetLibraryResourceTest extends BaseAssetLibraryResourceTestCase {
 			expectedSharingEnabled, settings.getSharingEnabled());
 		Assert.assertEquals(
 			expectedUseCustomLanguages, settings.getUseCustomLanguages());
+		Assert.assertEquals(expectedTrashEnabled, settings.getTrashEnabled());
+		Assert.assertEquals(
+			expectedTrashEntriesMaxAge, (int)settings.getTrashEntriesMaxAge());
 	}
 
 	private String[] _getAvailableLanguageIds(Locale... locales) {
@@ -440,7 +469,8 @@ public class AssetLibraryResourceTest extends BaseAssetLibraryResourceTestCase {
 			boolean autoTaggingEnabled, String[] availableLanguageIds,
 			String defaultLanguageId, String logoColor,
 			MimeTypeLimit[] mimeTypeLimits, boolean sharingEnabled,
-			boolean useCustomLanguages)
+			boolean useCustomLanguages, boolean trashEnabled,
+			int trashEntriesMaxAge)
 		throws Exception {
 
 		AssetLibrary assetLibrary = randomAssetLibrary();
@@ -454,6 +484,8 @@ public class AssetLibraryResourceTest extends BaseAssetLibraryResourceTestCase {
 		settings.setMimeTypeLimits(mimeTypeLimits);
 		settings.setSharingEnabled(sharingEnabled);
 		settings.setUseCustomLanguages(useCustomLanguages);
+		settings.setTrashEnabled(trashEnabled);
+		settings.setTrashEntriesMaxAge(trashEntriesMaxAge);
 
 		assetLibrary.setSettings(settings);
 
@@ -470,15 +502,18 @@ public class AssetLibraryResourceTest extends BaseAssetLibraryResourceTestCase {
 		String logoColor = RandomTestUtil.randomString();
 		boolean sharingEnabled = true;
 		boolean useCustomLanguages = true;
+		boolean trashEnabled = true;
+		int trashEntriesMaxAge = 1234;
 
 		AssetLibrary assetLibrary = _postAssetLibraryWithSettings(
 			autoTaggingEnabled, availableLanguageIds, defaultLanguageId,
-			logoColor, mimeTypeLimits, sharingEnabled, useCustomLanguages);
+			logoColor, mimeTypeLimits, sharingEnabled, useCustomLanguages,
+			trashEnabled, trashEntriesMaxAge);
 
 		_assertSettings(
 			assetLibrary, autoTaggingEnabled, availableLanguageIds,
 			defaultLanguageId, logoColor, mimeTypeLimits, sharingEnabled,
-			useCustomLanguages);
+			useCustomLanguages, trashEnabled, trashEntriesMaxAge);
 	}
 
 	private void _testPutAssetLibraryByExternalReferenceCode(
@@ -490,7 +525,8 @@ public class AssetLibraryResourceTest extends BaseAssetLibraryResourceTestCase {
 			_getAvailableLanguageIds(
 				LocaleUtil.US, LocaleUtil.SPAIN, LocaleUtil.GERMANY),
 			_language.getLanguageId(LocaleUtil.US),
-			RandomTestUtil.randomString(), mimeTypeLimits, true, true);
+			RandomTestUtil.randomString(), mimeTypeLimits, true, true, true,
+			1234);
 
 		String defaultLanguageId = _language.getLanguageId(LocaleUtil.SPAIN);
 
@@ -523,8 +559,8 @@ public class AssetLibraryResourceTest extends BaseAssetLibraryResourceTestCase {
 
 		_assertSettings(
 			assetLibrary, autoTaggingEnabled, availableLanguageIds,
-			defaultLanguageId, "outline-0", new MimeTypeLimit[0],
-			SharingConfigurationConstants.SHARING_ENABLED_DEFAULT, true);
+			defaultLanguageId, "outline-0", new MimeTypeLimit[0], false, true,
+			true, 1234);
 	}
 
 	@Inject
