@@ -31,7 +31,6 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.odata.entity.EntityField;
 import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
-import com.liferay.sharing.constants.SharingConfigurationConstants;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -550,6 +549,14 @@ public class AssetLibraryResourceTest extends BaseAssetLibraryResourceTestCase {
 		boolean useCustomLanguages = true;
 
 		settings.setUseCustomLanguages(useCustomLanguages);
+
+		boolean trashEnabled = true;
+
+		settings.setTrashEnabled(trashEnabled);
+
+		int trashEntriesMaxAge = 1234;
+
+		settings.setTrashEntriesMaxAge(trashEntriesMaxAge);
 
 		assetLibrary.setSettings(settings);
 
