@@ -35,7 +35,9 @@ export type SpaceSettings = {
 	defaultLanguageId?: string;
 	logoColor?: LogoColor;
 	mimeTypeLimits?: MimeTypeLimit[];
+	trashEnabled?: boolean;
 	sharingEnabled?: boolean;
+	trashEntriesMaxAge?: number;
 	useCustomLanguages?: boolean;
 };
 
