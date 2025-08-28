@@ -53,7 +53,6 @@ import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 import com.liferay.portal.vulcan.util.SearchUtil;
-import com.liferay.sharing.constants.SharingConfigurationConstants;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 
@@ -253,11 +252,18 @@ public class AssetLibraryResourceImpl extends BaseAssetLibraryResourceImpl {
 			_depotEntryGroupRelService.getDepotEntryGroupRels(
 				depotEntry, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 
-		List<Long> groupIds = _getEligibleGroupIds(
-			_groupLocalService.getGroup(
-				depotEntryGroupRels.get(
-					0
-				).getToGroupId()));
+		List<Long> groupIds;
+
+		if (!depotEntryGroupRels.isEmpty()) {
+			groupIds = _getEligibleGroupIds(
+				_groupLocalService.getGroup(
+					depotEntryGroupRels.get(
+						0
+					).getToGroupId()));
+		}
+		else {
+			groupIds = _getEligibleGroupIds(depotEntry.getGroup());
+		}
 
 		if (!groupIds.isEmpty() ||
 			Objects.equals(
@@ -415,15 +421,22 @@ public class AssetLibraryResourceImpl extends BaseAssetLibraryResourceImpl {
 				_depotEntryGroupRelService.getDepotEntryGroupRels(
 					depotEntry, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
 
-			List<Long> groupIds = _getEligibleGroupIds(
-				_groupLocalService.getGroup(
-					depotEntryGroupRels.get(
-						0
-					).getToGroupId()));
+			List<Long> groupIds;
+
+			if (!depotEntryGroupRels.isEmpty()) {
+				groupIds = _getEligibleGroupIds(
+					_groupLocalService.getGroup(
+						depotEntryGroupRels.get(
+							0
+						).getToGroupId()));
+			}
+			else {
+				groupIds = _getEligibleGroupIds(depotEntry.getGroup());
+			}
 
 			if ((groupIds.isEmpty() || (groupIds.size() == 1)) &&
 				Objects.equals(
-					unicodeProperties.getProperty("trashEnabled"), "true")) {
+					unicodeProperties.getProperty("trashEnabled"), "false")) {
 
 				for (DepotEntryGroupRel depotEntryGroupRel :
 						depotEntryGroupRels) {
@@ -682,9 +695,12 @@ public class AssetLibraryResourceImpl extends BaseAssetLibraryResourceImpl {
 			GetterUtil.getString(settings.getLogoColor(), "outline-0")
 		).put(
 			"sharingEnabled",
-			GetterUtil.getBoolean(
-				settings.getSharingEnabled(),
-				SharingConfigurationConstants.SHARING_ENABLED_DEFAULT)
+			GetterUtil.getBoolean(settings.getSharingEnabled())
+		).put(
+			"trashEnabled", GetterUtil.getBoolean(settings.getTrashEnabled())
+		).put(
+			"trashEntriesMaxAge",
+			GetterUtil.getInteger(settings.getTrashEntriesMaxAge())
 		).build();
 	}
 
