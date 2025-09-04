@@ -11,8 +11,11 @@ import com.liferay.object.model.ObjectEntryFolder;
 import com.liferay.object.service.ObjectDefinitionService;
 import com.liferay.object.service.ObjectDefinitionSettingLocalService;
 import com.liferay.object.service.ObjectEntryFolderLocalService;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.site.cms.site.initializer.internal.display.context.ViewRecycleBinSectionDisplayContext;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,12 +38,17 @@ public class ViewRecycleBinJSPSectionFragmentRenderer
 
 	@Override
 	protected ViewRecycleBinSectionDisplayContext getDisplayContext(
-		HttpServletRequest httpServletRequest) {
+			HttpServletRequest httpServletRequest)
+		throws PortalException {
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
 
 		return new ViewRecycleBinSectionDisplayContext(
-			_depotEntryLocalService, groupLocalService, httpServletRequest,
-			language, _objectDefinitionService,
-			_objectDefinitionSettingLocalService,
+			_depotEntryLocalService, themeDisplay.getScopeGroupId(),
+			groupLocalService, httpServletRequest, language,
+			_objectDefinitionService, _objectDefinitionSettingLocalService,
 			_objectEntryFolderLocalService,
 			_objectEntryFolderModelResourcePermission, _portal);
 	}
