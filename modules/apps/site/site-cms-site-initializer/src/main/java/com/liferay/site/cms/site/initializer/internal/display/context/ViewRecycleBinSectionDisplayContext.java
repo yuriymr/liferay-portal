@@ -5,10 +5,10 @@
 
 package com.liferay.site.cms.site.initializer.internal.display.context;
 
-import com.liferay.depot.constants.DepotConstants;
-import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
+import com.liferay.headless.asset.library.dto.v1_0.AssetLibrary;
+import com.liferay.headless.asset.library.resource.v1_0.AssetLibraryResource;
 import com.liferay.object.model.ObjectEntryFolder;
 import com.liferay.object.service.ObjectDefinitionService;
 import com.liferay.object.service.ObjectDefinitionSettingLocalService;
@@ -18,7 +18,6 @@ import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.language.Language;
@@ -28,13 +27,17 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.vulcan.pagination.Page;
+import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.site.cms.site.initializer.internal.util.ActionUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,6 +53,7 @@ public class ViewRecycleBinSectionDisplayContext
 	extends BaseSectionDisplayContext {
 
 	public ViewRecycleBinSectionDisplayContext(
+		AssetLibraryResource.Factory assetLibraryResourceFactory,
 		DepotEntryLocalService depotEntryLocalService, long groupId,
 		GroupLocalService groupLocalService,
 		HttpServletRequest httpServletRequest, Language language,
@@ -66,8 +70,12 @@ public class ViewRecycleBinSectionDisplayContext
 			objectDefinitionSettingLocalService,
 			objectEntryFolderModelResourcePermission, portal);
 
+		_assetLibraryResourceFactory = assetLibraryResourceFactory;
 		_groupId = groupId;
 		_objectEntryFolderLocalService = objectEntryFolderLocalService;
+
+		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
 	}
 
 	public Map<String, Object> getBreadcrumbProps() {
@@ -168,17 +176,16 @@ public class ViewRecycleBinSectionDisplayContext
 	protected String getCMSSectionFilterString() {
 		String filter =
 			"cmsRoot eq true and (cmsSection eq 'contents' or cmsSection eq " +
-				"'files') and status eq " + WorkflowConstants.STATUS_IN_TRASH;
+				"'files') and status eq ";
 
 		Long[] groupIds;
 
 		try {
 			groupIds = _getGroupIds();
 		}
-		catch (PortalException portalException) {
+		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
-				_log.debug(
-					"Unable to resolve eligible group ids", portalException);
+				_log.debug("Unable to resolve eligible group ids", exception);
 			}
 
 			return filter;
@@ -188,7 +195,8 @@ public class ViewRecycleBinSectionDisplayContext
 			return filter + WorkflowConstants.STATUS_ANY;
 		}
 
-		return filter + _buildGroupIdsAnyClause(groupIds);
+		return filter + WorkflowConstants.STATUS_IN_TRASH +
+			_buildGroupIdsAnyClause(groupIds);
 	}
 
 	private String _buildGroupIdsAnyClause(Long[] groupIds) {
@@ -205,23 +213,29 @@ public class ViewRecycleBinSectionDisplayContext
 		return sb.toString();
 	}
 
-	private Long[] _getGroupIds() throws PortalException {
-		List<DepotEntry> depotEntries =
-			depotEntryLocalService.getGroupConnectedDepotEntries(
-				_groupId, DepotConstants.TYPE_ANY, QueryUtil.ALL_POS,
-				QueryUtil.ALL_POS);
+	private Long[] _getGroupIds() throws Exception {
+		AssetLibraryResource.Builder builder =
+			_assetLibraryResourceFactory.create();
 
-		List<DepotEntry> trashEnabledDepotEntries = ListUtil.filter(
-			depotEntries,
-			depotEntry -> {
-				Group depotGroup = groupLocalService.fetchGroup(
-					depotEntry.getGroupId());
+		AssetLibraryResource assetLibraryResource = builder.user(
+			_themeDisplay.getUser()
+		).build();
 
-				return (depotGroup != null) && _isTrashEnabled(depotGroup);
-			});
+		Page<AssetLibrary> assetLibrariesPage =
+			assetLibraryResource.getAssetLibrariesPage(
+				null, null, assetLibraryResource.toFilter("type eq 'Space'"),
+				Pagination.of(QueryUtil.ALL_POS, QueryUtil.ALL_POS), null);
+
+		List<AssetLibrary> assetLibraries = ListUtil.fromCollection(
+			assetLibrariesPage.getItems());
+
+		List<AssetLibrary> trashEnabledassetLibraries = ListUtil.filter(
+			assetLibraries,
+			assetLibrary -> assetLibrary.getSettings(
+			).getTrashEnabled());
 
 		Long[] groupIds = TransformUtil.transformToArray(
-			trashEnabledDepotEntries, DepotEntry::getGroupId, Long.class);
+			trashEnabledassetLibraries, AssetLibrary::getSiteId, Long.class);
 
 		Group scopeGroup = groupLocalService.fetchGroup(_groupId);
 
@@ -242,7 +256,9 @@ public class ViewRecycleBinSectionDisplayContext
 	private static final Log _log = LogFactoryUtil.getLog(
 		ViewRecycleBinSectionDisplayContext.class);
 
+	private final AssetLibraryResource.Factory _assetLibraryResourceFactory;
 	private final long _groupId;
 	private final ObjectEntryFolderLocalService _objectEntryFolderLocalService;
+	private final ThemeDisplay _themeDisplay;
 
 }
