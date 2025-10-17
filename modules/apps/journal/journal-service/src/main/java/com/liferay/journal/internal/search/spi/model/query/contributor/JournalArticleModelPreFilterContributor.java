@@ -5,7 +5,10 @@
 
 package com.liferay.journal.internal.search.spi.model.query.contributor;
 
+import com.liferay.dynamic.data.mapping.model.DDMFormField;
+import com.liferay.dynamic.data.mapping.model.DDMFormFieldOptions;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
+import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.dynamic.data.mapping.util.DDMIndexer;
 import com.liferay.journal.model.JournalArticle;
@@ -38,10 +41,12 @@ import java.io.Serializable;
 
 import java.text.Format;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -108,9 +113,12 @@ public class JournalArticleModelPreFilterContributor
 			}
 
 			try {
+				Serializable normalized =
+					_normalizeDDMValueIfNeeded(ddmStructureFieldName, ddmStructureFieldValue, locale);
+
 				QueryFilter queryFilter =
 					_ddmIndexer.createFieldValueQueryFilter(
-						ddmStructureFieldName, ddmStructureFieldValue, locale);
+						ddmStructureFieldName, normalized, locale);
 
 				booleanFilter.add(queryFilter, BooleanClauseOccur.MUST);
 			}
@@ -247,6 +255,57 @@ public class JournalArticleModelPreFilterContributor
 		dateRangeFilterBuilder.setIncludeUpper(false);
 
 		booleanFilter.add(dateRangeFilterBuilder.build());
+	}
+
+	private Serializable _normalizeDDMValueIfNeeded(
+		String ddmStructureFieldName, Serializable rawValue, Locale locale)
+		throws PortalException {
+
+		// ddmStructureFieldName vem de DDMIndexer.encodeName:
+		// ddm__<indexType>__<structureId>__<fieldRef>_<lang>
+		String[] parts = ddmStructureFieldName.split("__");
+		if (parts.length < 4) return rawValue;
+
+		long structureId = GetterUtil.getLong(parts[2]);
+		String tail = parts[3]; // "<fieldRef>_<lang>" ou só <fieldRef>
+		String fieldRef = tail;
+		int idx = tail.lastIndexOf('_');
+		if (idx > 0) {
+			fieldRef = tail.substring(0, idx);
+		}
+
+		DDMStructure structure = _ddmStructureLocalService.getStructure(structureId);
+		DDMFormField ddmFormField = structure.getDDMFormFieldByFieldReference(fieldRef);
+		if (ddmFormField == null) return rawValue;
+
+		// Só precisamos mapear quando a UI manda RÓTULO em vez de VALUE
+		DDMFormFieldOptions options = (DDMFormFieldOptions)ddmFormField.getProperty("options");
+		if (options == null) return rawValue;
+
+		Map<String, LocalizedValue> optionMap = options.getOptions(); // key = VALUE, value = LABEL
+		// Constrói label -> value
+		Map<String, String> labelToValue = new java.util.HashMap<>();
+		for (Map.Entry<String, LocalizedValue> e : optionMap.entrySet()) {
+			labelToValue.put(e.getValue().getString(locale), e.getKey());
+		}
+
+		if (rawValue instanceof String[]) {
+			String[] labelsOrValues = (String[])rawValue;
+			java.util.List<String> values = new ArrayList<>();
+			for (String s : labelsOrValues) {
+				values.add(labelToValue.getOrDefault(s, s)); // se já for value, mantém
+			}
+			return values.toArray(new String[0]);
+		}
+		else if (rawValue instanceof String) {
+			String s = (String)rawValue;
+			// Se vier algo tipo "[Object 1]" ou '["Object 1"]', limpe:
+			s = s.replace("[", "").replace("]", "").replace("\"", "").trim();
+			String value = labelToValue.getOrDefault(s, s);
+			return value;
+		}
+
+		return rawValue;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
