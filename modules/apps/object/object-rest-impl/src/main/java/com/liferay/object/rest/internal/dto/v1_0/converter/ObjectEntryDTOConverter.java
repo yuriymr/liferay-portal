@@ -1212,6 +1212,42 @@ public class ObjectEntryDTOConverter
 				return serializable;
 			}
 
+			if (serializable instanceof Object[]) {
+				Object[] items = (Object[])serializable;
+
+				List<ListEntry> listEntries = TransformUtil.transformToList(
+					items,
+					item -> {
+						if (item == null) {
+							return null;
+						}
+
+						if (item instanceof Map) {
+							Map<String, ?> m = (Map<String, ?>)item;
+
+							String key = GetterUtil.getString(m.get("key"));
+
+							if (Validator.isNull(key)) {
+								key = GetterUtil.getString(m.get("value"));
+							}
+
+							if (Validator.isNull(key)) {
+								return null;
+							}
+
+							return _getListEntry(
+								dtoConverterContext, key,
+								objectField.getListTypeDefinitionId());
+						}
+
+						return null;
+					});
+
+				listEntries.removeIf(Objects::isNull);
+
+				return (Serializable)listEntries;
+			}
+
 			return (Serializable)TransformUtil.transformToList(
 				StringUtil.split(
 					(String)serializable, StringPool.COMMA_AND_SPACE),
