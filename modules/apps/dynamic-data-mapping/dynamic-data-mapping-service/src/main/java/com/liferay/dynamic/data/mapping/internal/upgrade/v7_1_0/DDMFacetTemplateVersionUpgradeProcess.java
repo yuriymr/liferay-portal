@@ -1,13 +1,11 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2025 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-package com.liferay.dynamic.data.mapping.internal.upgrade.v5_2_0;
+package com.liferay.dynamic.data.mapping.internal.upgrade.v7_1_0;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
-import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -15,11 +13,11 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import java.util.Map;
 
 /**
- * @author Bryan Engler
+ * @author Yuri Monteiro
  */
-public class DDMFacetTemplateUpgradeProcess extends UpgradeProcess {
+public class DDMFacetTemplateVersionUpgradeProcess extends UpgradeProcess {
 
-	public DDMFacetTemplateUpgradeProcess(
+	public DDMFacetTemplateVersionUpgradeProcess(
 		ClassNameLocalService classNameLocalService) {
 
 		_classNameLocalService = classNameLocalService;
@@ -27,51 +25,7 @@ public class DDMFacetTemplateUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		_deleteOrphanedDefaultFacetTemplates();
-
 		_updateFacetTemplates();
-	}
-
-	private void _deleteOrphanedDefaultFacetTemplates() throws Exception {
-		long resourceClassNameId = _classNameLocalService.getClassNameId(
-			"com.liferay.portlet.display.template.PortletDisplayTemplate");
-
-		String[] defaultTemplateKeys = {
-			"'CATEGORY-FACET-CLOUD-FTL'", "'CATEGORY-FACET-COMPACT-FTL'",
-			"'CATEGORY-FACET-LABEL-FTL'", "'CATEGORY-FACET-VOCABULARY-FTL'",
-			"'CUSTOM-FACET-COMPACT-FTL'", "'CUSTOM-FACET-LABEL-FTL'",
-			"'FOLDER-FACET-COMPACT-FTL'", "'FOLDER-FACET-LABEL-FTL'",
-			"'SITE-FACET-COMPACT-FTL'", "'SITE-FACET-LABEL-FTL'",
-			"'TAG-FACET-CLOUD-FTL'", "'TAG-FACET-COMPACT-FTL'",
-			"'TAG-FACET-LABEL-FTL'", "'TYPE-FACET-COMPACT-FTL'",
-			"'TYPE-FACET-LABEL-FTL'"
-		};
-
-		String[] classNames = {
-			"com.liferay.portal.search.web.internal.facet.display.context." +
-				"AssetCategoriesSearchFacetTermDisplayContext",
-			"com.liferay.portal.search.web.internal.custom.facet.display." +
-				"context.CustomFacetTermDisplayContext",
-			"com.liferay.portal.search.web.internal.facet.display.context." +
-				"FolderSearchFacetTermDisplayContext",
-			"com.liferay.portal.search.web.internal.facet.display.context." +
-				"ScopeSearchFacetTermDisplayContext",
-			"com.liferay.portal.search.web.internal.facet.display.context." +
-				"AssetTagsSearchFacetTermDisplayContext",
-			"com.liferay.portal.search.web.internal.facet.display.context." +
-				"AssetEntriesSearchFacetTermDisplayContext"
-		};
-
-		for (String className : classNames) {
-			runSQL(
-				StringBundler.concat(
-					"delete from DDMTemplate where resourceClassNameId = ",
-					resourceClassNameId, " and classNameId = ",
-					_classNameLocalService.getClassNameId(className),
-					" and templateKey in (",
-					StringUtil.merge(defaultTemplateKeys, StringPool.COMMA),
-					")"));
-		}
 	}
 
 	private void _updateFacetTemplates() throws Exception {
@@ -85,12 +39,6 @@ public class DDMFacetTemplateUpgradeProcess extends UpgradeProcess {
 				entry.getValue());
 			long oldClassNameId = _classNameLocalService.getClassNameId(
 				entry.getKey());
-
-			runSQL(
-				StringBundler.concat(
-					"update DDMTemplate set classNameId = ", newClassNameId,
-					" where classNameId = ", oldClassNameId,
-					" and resourceClassNameId = ", resourceClassNameId));
 
 			runSQL(
 				StringBundler.concat(
