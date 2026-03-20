@@ -9,6 +9,7 @@ import com.liferay.depot.constants.DepotConstants;
 import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.depot.service.DepotEntryServiceUtil;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.headless.asset.library.resource.v1_0.AssetLibraryResource;
 import com.liferay.object.model.ObjectEntryFolder;
 import com.liferay.object.service.ObjectDefinitionService;
@@ -17,13 +18,19 @@ import com.liferay.object.service.ObjectEntryFolderLocalService;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringUtil;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Role;
+import com.liferay.portal.kernel.model.UserGroupRole;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -38,8 +45,10 @@ import com.liferay.trash.TrashHelper;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Pedro Leite
@@ -60,7 +69,8 @@ public class ViewRecycleBinSectionDisplayContext
 		Portal portal,
 		TranslationInfoItemFieldValuesExporterRegistry
 			translationInfoItemFieldValuesExporterRegistry,
-		TrashHelper trashHelper) {
+		TrashHelper trashHelper,
+		UserGroupRoleLocalService userGroupRoleLocalService) {
 
 		super(
 			depotEntryLocalService, null, groupLocalService, httpServletRequest,
@@ -73,12 +83,14 @@ public class ViewRecycleBinSectionDisplayContext
 		_groupId = groupId;
 		_objectEntryFolderLocalService = objectEntryFolderLocalService;
 		_trashHelper = trashHelper;
+		_userGroupRoleLocalService = userGroupRoleLocalService;
 
 		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 	}
 
-	public Map<String, Object> getBreadcrumbProps() {
+	@Override
+	public Map<String, Object> getBreadcrumbProps() throws PortalException {
 		JSONArray jsonArray = JSONFactoryUtil.createJSONArray();
 
 		if (objectEntryFolder == null) {
@@ -88,6 +100,8 @@ public class ViewRecycleBinSectionDisplayContext
 
 			return HashMapBuilder.<String, Object>put(
 				"breadcrumbItems", jsonArray
+			).put(
+				"canDeleteFromRecycleBin", _canManageRecycleBin()
 			).put(
 				"hideSpace", true
 			).build();
@@ -131,6 +145,8 @@ public class ViewRecycleBinSectionDisplayContext
 		return HashMapBuilder.<String, Object>put(
 			"breadcrumbItems", jsonArray
 		).put(
+			"canDeleteFromRecycleBin", _canManageRecycleBin()
+		).put(
 			"displayType",
 			() -> {
 				Group group = groupLocalService.fetchGroup(
@@ -145,6 +161,15 @@ public class ViewRecycleBinSectionDisplayContext
 		).put(
 			"size", "md"
 		).build();
+	}
+
+	@Override
+	public List<DropdownItem> getBulkActionDropdownItems() {
+		if (!_canManageRecycleBin()) {
+			return Collections.emptyList();
+		}
+
+		return super.getBulkActionDropdownItems();
 	}
 
 	public Map<String, Object> getEmptyState() {
@@ -211,10 +236,51 @@ public class ViewRecycleBinSectionDisplayContext
 			WorkflowConstants.STATUS_IN_TRASH);
 	}
 
+	private boolean _canManageRecycleBin() {
+		try {
+			if (_themeDisplay.getPermissionChecker(
+				).isOmniadmin()) {
+
+				return true;
+			}
+
+			List<UserGroupRole> userGroupRoles =
+				_userGroupRoleLocalService.getUserGroupRoles(
+					_themeDisplay.getUserId());
+
+			for (UserGroupRole userGroupRole : userGroupRoles) {
+				Role role = userGroupRole.getRole();
+
+				if (Objects.equals(
+						role.getExternalReferenceCode(),
+						"L_ASSET_LIBRARY_ADMINISTRATOR") ||
+					Objects.equals(
+						role.getExternalReferenceCode(),
+						"L_ASSET_LIBRARY_OWNER")) {
+
+					return true;
+				}
+			}
+
+			return false;
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
+			}
+
+			return false;
+		}
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		ViewRecycleBinSectionDisplayContext.class);
+
 	private final AssetLibraryResource.Factory _assetLibraryResourceFactory;
 	private final long _groupId;
 	private final ObjectEntryFolderLocalService _objectEntryFolderLocalService;
 	private final ThemeDisplay _themeDisplay;
 	private final TrashHelper _trashHelper;
+	private final UserGroupRoleLocalService _userGroupRoleLocalService;
 
 }

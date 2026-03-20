@@ -16,9 +16,16 @@ import EmptyRecycleBinModalContent from '../modal/EmptyRecycleBinModalContent';
 
 interface Props {
 	breadcrumbItems: any[];
+	canDeleteFromRecycleBin: boolean | string;
 }
 
-export default function RecycleBinToolbar({breadcrumbItems}: Props) {
+export default function RecycleBinToolbar({
+	breadcrumbItems,
+	canDeleteFromRecycleBin,
+}: Props) {
+	const hasDeletePermission =
+		canDeleteFromRecycleBin === true || canDeleteFromRecycleBin === 'true';
+
 	return isRecycleBinRootPage(breadcrumbItems) ? (
 		<div>
 			<ClayToolbar
@@ -43,45 +50,49 @@ export default function RecycleBinToolbar({breadcrumbItems}: Props) {
 							</ClayToolbar.Section>
 						</ClayToolbar.Item>
 
-						<ClayToolbar.Item>
-							<ClayDropDownWithItems
-								items={[
-									{
-										label: Liferay.Language.get(
-											'empty-recycle-bin'
-										),
-										onClick: () => {
-											openCMSModal({
-												center: true,
-												contentComponent: ({
-													closeModal,
-												}: {
-													closeModal: () => void;
-												}) => (
-													<EmptyRecycleBinModalContent
-														closeModal={closeModal}
-													/>
-												),
-												size: 'md',
-												status: 'danger',
-											});
+						{hasDeletePermission && (
+							<ClayToolbar.Item>
+								<ClayDropDownWithItems
+									items={[
+										{
+											label: Liferay.Language.get(
+												'empty-recycle-bin'
+											),
+											onClick: () => {
+												openCMSModal({
+													center: true,
+													contentComponent: ({
+														closeModal,
+													}: {
+														closeModal: () => void;
+													}) => (
+														<EmptyRecycleBinModalContent
+															closeModal={
+																closeModal
+															}
+														/>
+													),
+													size: 'md',
+													status: 'danger',
+												});
+											},
+											symbolLeft: 'trash',
 										},
-										symbolLeft: 'trash',
-									},
-								]}
-								menuWidth="shrink"
-								trigger={
-									<ClayButtonWithIcon
-										aria-label={Liferay.Language.get(
-											'more-actions'
-										)}
-										displayType="unstyled"
-										size="xs"
-										symbol="ellipsis-v"
-									/>
-								}
-							/>
-						</ClayToolbar.Item>
+									]}
+									menuWidth="shrink"
+									trigger={
+										<ClayButtonWithIcon
+											aria-label={Liferay.Language.get(
+												'more-actions'
+											)}
+											displayType="unstyled"
+											size="xs"
+											symbol="ellipsis-v"
+										/>
+									}
+								/>
+							</ClayToolbar.Item>
+						)}
 					</ClayToolbar.Nav>
 				</div>
 			</ClayToolbar>

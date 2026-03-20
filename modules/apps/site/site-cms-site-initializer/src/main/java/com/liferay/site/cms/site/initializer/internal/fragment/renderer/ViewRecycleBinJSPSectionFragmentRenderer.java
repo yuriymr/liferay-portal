@@ -14,6 +14,7 @@ import com.liferay.object.service.ObjectDefinitionSettingLocalService;
 import com.liferay.object.service.ObjectEntryFolderLocalService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
+import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -54,7 +55,8 @@ public class ViewRecycleBinJSPSectionFragmentRenderer
 			_objectDefinitionSettingLocalService,
 			_objectEntryFolderLocalService,
 			_objectEntryFolderModelResourcePermission, _portal,
-			translationInfoItemFieldValuesExporterRegistry, _trashHelper);
+			translationInfoItemFieldValuesExporterRegistry, _trashHelper,
+			_userGroupRoleLocalService);
 	}
 
 	@Override
@@ -89,5 +91,8 @@ public class ViewRecycleBinJSPSectionFragmentRenderer
 
 	@Reference
 	private TrashHelper _trashHelper;
+
+	@Reference
+	private UserGroupRoleLocalService _userGroupRoleLocalService;
 
 }
