@@ -6,11 +6,13 @@
 package com.liferay.site.cms.site.initializer.internal.display.context.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.depot.constants.DepotRolesConstants;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.fragment.renderer.FragmentRenderer;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
+import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.object.constants.ObjectFolderConstants;
 import com.liferay.object.model.ObjectEntryFolder;
 import com.liferay.petra.string.StringBundler;
@@ -19,9 +21,12 @@ import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.RoleLocalService;
+import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
@@ -30,10 +35,12 @@ import com.liferay.portal.kernel.test.rule.Sync;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
@@ -89,6 +96,8 @@ public class ViewRecycleBinSectionDisplayContextTest
 						"label",
 						language.get(LocaleUtil.getDefault(), "recycle-bin")
 					))
+			).put(
+				"canDeleteFromRecycleBin", true
 			).put(
 				"hideSpace", true
 			).build(),
@@ -204,6 +213,98 @@ public class ViewRecycleBinSectionDisplayContextTest
 			"restore", "item", null);
 	}
 
+	@Test
+	public void testSpaceMemberCannotEmptyRecycleBinOrBulkDelete()
+		throws Exception {
+
+		User originalUser = TestPropsValues.getUser();
+
+		DepotEntry depotEntry = _addDepotEntry(
+			true, TestPropsValues.getUserId());
+
+		User user = UserTestUtil.addUser();
+
+		try {
+			_groupLocalService.addUserGroup(
+				user.getUserId(), depotEntry.getGroup());
+
+			setUser(user);
+
+			Object displayContext = getSectionDisplayContext(
+				_getMockHttpServletRequest(depotEntry.getGroup(), user));
+
+			Map<String, Object> breadcrumbProps = _getBreadcrumbProps(
+				displayContext);
+
+			Assert.assertEquals(
+				breadcrumbProps.toString(), false,
+				breadcrumbProps.get("canDeleteFromRecycleBin"));
+
+			List<DropdownItem> bulkActionDropdownItems =
+				_getBulkActionDropdownItems(displayContext);
+
+			Assert.assertTrue(
+				bulkActionDropdownItems.toString(),
+				bulkActionDropdownItems.isEmpty());
+		}
+		finally {
+			setUser(originalUser);
+
+			_depotEntryLocalService.deleteDepotEntry(depotEntry);
+
+			_userLocalService.deleteUser(user);
+		}
+	}
+
+	@Test
+	public void testSpaceOwnerCanEmptyRecycleBinAndBulkDelete()
+		throws Exception {
+
+		User originalUser = TestPropsValues.getUser();
+
+		DepotEntry depotEntry = _addDepotEntry(
+			true, TestPropsValues.getUserId());
+
+		User user = UserTestUtil.addUser();
+
+		try {
+			_groupLocalService.addUserGroup(
+				user.getUserId(), depotEntry.getGroup());
+
+			Role role = _roleLocalService.getRole(
+				group.getCompanyId(), DepotRolesConstants.ASSET_LIBRARY_OWNER);
+
+			_userGroupRoleLocalService.addUserGroupRole(
+				user.getUserId(), depotEntry.getGroupId(), role.getRoleId());
+
+			setUser(user);
+
+			Object displayContext = getSectionDisplayContext(
+				_getMockHttpServletRequest(depotEntry.getGroup(), user));
+
+			Map<String, Object> breadcrumbProps = _getBreadcrumbProps(
+				displayContext);
+
+			Assert.assertEquals(
+				breadcrumbProps.toString(), true,
+				breadcrumbProps.get("canDeleteFromRecycleBin"));
+
+			List<DropdownItem> bulkActionDropdownItems =
+				_getBulkActionDropdownItems(displayContext);
+
+			Assert.assertEquals(
+				bulkActionDropdownItems.toString(), 1,
+				bulkActionDropdownItems.size());
+		}
+		finally {
+			setUser(originalUser);
+
+			_depotEntryLocalService.deleteDepotEntry(depotEntry);
+
+			_userLocalService.deleteUser(user);
+		}
+	}
+
 	@Override
 	protected CreationMenu getCreationMenu(ObjectEntryFolder objectEntryFolder)
 		throws Exception {
@@ -283,11 +384,34 @@ public class ViewRecycleBinSectionDisplayContextTest
 			displayContext, "getBreadcrumbProps", new Class<?>[0]);
 	}
 
+	private List<DropdownItem> _getBulkActionDropdownItems(
+		Object displayContext) {
+
+		return ReflectionTestUtil.invoke(
+			displayContext, "getBulkActionDropdownItems", new Class<?>[0]);
+	}
+
 	private String _getExpectedFilterString(long... groupIds) {
 		return StringBundler.concat(
 			"groupIds/any(g:g in (",
 			StringUtil.merge(groupIds, StringPool.COMMA), ")) and status eq ",
 			WorkflowConstants.STATUS_IN_TRASH);
+	}
+
+	private HttpServletRequest _getMockHttpServletRequest(
+			Group group, User user)
+		throws Exception {
+
+		HttpServletRequest httpServletRequest = getMockHttpServletRequest(user);
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		themeDisplay.setScopeGroupId(group.getGroupId());
+		themeDisplay.setSiteGroupId(group.getGroupId());
+
+		return httpServletRequest;
 	}
 
 	private void _setTrashEnabledGroupProperty(Group group, String value)
@@ -316,6 +440,12 @@ public class ViewRecycleBinSectionDisplayContextTest
 
 	@Inject
 	private GroupLocalService _groupLocalService;
+
+	@Inject
+	private RoleLocalService _roleLocalService;
+
+	@Inject
+	private UserGroupRoleLocalService _userGroupRoleLocalService;
 
 	@Inject
 	private UserLocalService _userLocalService;
