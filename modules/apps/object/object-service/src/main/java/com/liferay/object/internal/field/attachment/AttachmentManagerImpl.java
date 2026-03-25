@@ -24,6 +24,7 @@ import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectFieldSetting;
+import com.liferay.object.service.ObjectEntryFolderLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectFieldSettingLocalService;
 import com.liferay.petra.string.CharPool;
@@ -91,6 +92,9 @@ public class AttachmentManagerImpl implements AttachmentManager {
 		ObjectField objectField = _objectFieldLocalService.getObjectField(
 			objectFieldId);
 
+		ObjectDefinition objectDefinition =
+			objectField.getObjectDefinition();
+
 		if (Objects.equals(
 				ObjectFieldSettingUtil.getValue(
 					ObjectFieldSettingConstants.NAME_FILE_SOURCE,
@@ -109,9 +113,21 @@ public class AttachmentManagerImpl implements AttachmentManager {
 			dlFolderId = _getStorageDLFolderId(
 				companyId, groupId, serviceContext, storageDLFolderPath);
 		}
+		else if(Objects.equals(
+			ObjectFieldSettingUtil.getValue(
+				ObjectFieldSettingConstants.NAME_FILE_SOURCE,
+				objectField.getObjectFieldSettings()),
+			ObjectFieldSettingConstants.
+				VALUE_USER_COMPUTER_TO_CMS_BASIC_DOCUMENT) && !Objects.equals(objectDefinition.getExternalReferenceCode(), "L_CMS_BASIC_DOCUMENT")){
+
+			String storageDLFolderPath = ObjectFieldSettingUtil.getValue(
+				ObjectFieldSettingConstants.NAME_STORAGE_DL_FOLDER_PATH,
+				objectField.getObjectFieldSettings());
+
+			dlFolderId = _getStorageDLFolderId(
+				companyId, groupId, serviceContext, storageDLFolderPath);
+		}
 		else {
-			ObjectDefinition objectDefinition =
-				objectField.getObjectDefinition();
 
 			DLFolder dlFolder = getDLFolder(
 				companyId, groupId, objectDefinition.getPortletId(),
@@ -442,6 +458,9 @@ public class AttachmentManagerImpl implements AttachmentManager {
 	private MimeTypes _mimeTypes;
 
 	private volatile ObjectConfiguration _objectConfiguration;
+
+	@Reference
+	private ObjectEntryFolderLocalService _objectEntryFolderLocalService;
 
 	@Reference
 	private ObjectFieldLocalService _objectFieldLocalService;
