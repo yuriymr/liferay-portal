@@ -98,6 +98,7 @@ import com.liferay.portal.kernel.model.ExternalReferenceCodeModel;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupedModel;
 import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Sort;
@@ -1998,7 +1999,7 @@ public class DefaultObjectEntryManagerImpl
 				objectDefinition.getCompanyId(),
 				objectDefinition.getStorageType());
 
-		ThemeDisplay themeDisplay = serviceContext.getThemeDisplay();
+		User user = _userLocalService.getUser(serviceContext.getUserId());
 
 		long fileEntryId = serviceBuilderFileEntry.getFileEntryId();
 
@@ -2006,7 +2007,7 @@ public class DefaultObjectEntryManagerImpl
 
 		objectEntryManager.addObjectEntry(
 			new DefaultDTOConverterContext(
-				false, null, null, null, null, themeDisplay.getLocale(), null,
+				false, null, null, null, null, user.getLocale(), null,
 				serviceContext.fetchUser()),
 			objectDefinition,
 			new ObjectEntry() {
