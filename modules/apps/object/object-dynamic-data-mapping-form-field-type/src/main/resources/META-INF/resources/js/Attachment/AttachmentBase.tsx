@@ -319,6 +319,16 @@ export default function AttachmentBase({
 
 		previewUrl.searchParams.delete('download');
 
+		const result = {
+			contentURL: previewUrl.toString(),
+			fileEntryId: String(response.id),
+			id: String(response.file?.id),
+			source: 'cms',
+			title: response.title,
+		};
+
+		console.log(result, 'result')
+
 		return {
 			contentURL: previewUrl.toString(),
 			fileEntryId: String(response.id),
