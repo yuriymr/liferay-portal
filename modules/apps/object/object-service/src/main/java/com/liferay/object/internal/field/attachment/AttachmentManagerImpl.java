@@ -91,12 +91,18 @@ public class AttachmentManagerImpl implements AttachmentManager {
 		ObjectField objectField = _objectFieldLocalService.getObjectField(
 			objectFieldId);
 
-		if (Objects.equals(
+		if ((Objects.equals(
 				ObjectFieldSettingUtil.getValue(
 					ObjectFieldSettingConstants.NAME_FILE_SOURCE,
 					objectField.getObjectFieldSettings()),
 				ObjectFieldSettingConstants.
-					VALUE_USER_COMPUTER_TO_DOCS_AND_MEDIA) &&
+					VALUE_USER_COMPUTER_TO_DOCS_AND_MEDIA) ||
+			 Objects.equals(
+				 ObjectFieldSettingUtil.getValue(
+					 ObjectFieldSettingConstants.NAME_FILE_SOURCE,
+					 objectField.getObjectFieldSettings()),
+				 ObjectFieldSettingConstants.
+					 VALUE_USER_COMPUTER_TO_CMS_BASIC_DOCUMENT)) &&
 			GetterUtil.getBoolean(
 				ObjectFieldSettingUtil.getValue(
 					ObjectFieldSettingConstants.NAME_SHOW_FILES_IN_LIBRARY,
