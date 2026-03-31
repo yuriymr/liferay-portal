@@ -80,6 +80,7 @@ import com.liferay.petra.io.StreamUtil;
 import com.liferay.petra.sql.dsl.Column;
 import com.liferay.petra.sql.dsl.Table;
 import com.liferay.petra.sql.dsl.expression.Predicate;
+import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -97,6 +98,7 @@ import com.liferay.portal.kernel.model.ExternalReferenceCodeModel;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupedModel;
 import com.liferay.portal.kernel.model.PersistedModel;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Sort;
@@ -113,6 +115,7 @@ import com.liferay.portal.kernel.service.RoleService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.permission.ModelPermissions;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.DateUtil;
@@ -1979,6 +1982,63 @@ public class DefaultObjectEntryManagerImpl
 		}
 	}
 
+	private void _createCMSObjectEntry(
+			long groupId, ObjectDefinition objectDefinition,
+			ObjectField objectField,
+			com.liferay.portal.kernel.repository.model.FileEntry
+				serviceBuilderFileEntry,
+			ServiceContext serviceContext, String scopeKey)
+		throws Exception {
+
+		String storageDLFolderPath = ObjectFieldSettingUtil.getValue(
+			ObjectFieldSettingConstants.NAME_STORAGE_DL_FOLDER_PATH,
+			objectField.getObjectFieldSettings());
+
+		ObjectEntryManager objectEntryManager =
+			_objectEntryManagerRegistry.getObjectEntryManager(
+				objectDefinition.getCompanyId(),
+				objectDefinition.getStorageType());
+
+		User user = _userLocalService.getUser(serviceContext.getUserId());
+
+		long fileEntryId = serviceBuilderFileEntry.getFileEntryId();
+
+		String fileName = serviceBuilderFileEntry.getFileName();
+
+		objectEntryManager.addObjectEntry(
+			new DefaultDTOConverterContext(
+				false, null, null, null, null, user.getLocale(), null,
+				serviceContext.fetchUser()),
+			objectDefinition,
+			new ObjectEntry() {
+				{
+					setObjectEntryFolderExternalReferenceCode(
+						() -> _getObjectEntryFolderExternalReferenceCode(
+							objectField.getCompanyId(), groupId, serviceContext,
+							storageDLFolderPath));
+					setProperties(
+						() -> HashMapBuilder.<String, Object>put(
+							"file", fileEntryId
+						).put(
+							"title_i18n",
+							HashMapBuilder.put(
+								LocaleUtil.toLanguageId(
+									LocaleUtil.getSiteDefault()),
+								fileName
+							).build()
+						).build());
+					setStatus(
+						() -> new Status() {
+							{
+								setCode(
+									() -> WorkflowConstants.STATUS_APPROVED);
+							}
+						});
+				}
+			},
+			scopeKey);
+	}
+
 	private ServiceContext _createServiceContext(
 			DTOConverterContext dtoConverterContext,
 			ObjectDefinition objectDefinition, ObjectEntry objectEntry,
@@ -2369,6 +2429,50 @@ public class DefaultObjectEntryManagerImpl
 					objectEntry.getId(), version),
 				serviceBuilderObjectEntry),
 			serviceBuilderObjectEntry);
+	}
+
+	private String _getObjectEntryFolderExternalReferenceCode(
+			long companyId, long groupId, ServiceContext serviceContext,
+			String storageDLFolderPath)
+		throws PortalException {
+
+		ObjectEntryFolder objectEntryFolder =
+			_objectEntryFolderLocalService.
+				fetchObjectEntryFolderByExternalReferenceCode(
+					ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_FILES,
+					groupId, companyId);
+
+		String objectEntryFolderExternalReferenceCode =
+			objectEntryFolder.getExternalReferenceCode();
+
+		for (String name :
+				StringUtil.split(storageDLFolderPath, CharPool.FORWARD_SLASH)) {
+
+			long parentObjectEntryFolderId =
+				objectEntryFolder.getObjectEntryFolderId();
+
+			objectEntryFolder =
+				_objectEntryFolderLocalService.fetchObjectEntryFolder(
+					groupId, companyId, parentObjectEntryFolderId, name);
+
+			if (objectEntryFolder != null) {
+				objectEntryFolderExternalReferenceCode =
+					objectEntryFolder.getExternalReferenceCode();
+
+				continue;
+			}
+
+			objectEntryFolder =
+				_objectEntryFolderLocalService.addObjectEntryFolder(
+					null, groupId, serviceContext.getUserId(),
+					parentObjectEntryFolderId, null, null, name,
+					serviceContext);
+
+			objectEntryFolderExternalReferenceCode =
+				objectEntryFolder.getExternalReferenceCode();
+		}
+
+		return objectEntryFolderExternalReferenceCode;
 	}
 
 	private long _getObjectEntryFolderId(
@@ -3033,6 +3137,24 @@ public class DefaultObjectEntryManagerImpl
 				fileEntry.getExternalReferenceCode(), fileContent,
 				fileEntry.getName(), folderExternalReferenceCode, folderGroupId,
 				objectField.getObjectFieldId(), serviceContext);
+		}
+		else if (StringUtil.equals(
+					fileSource,
+					ObjectFieldSettingConstants.
+						VALUE_USER_COMPUTER_TO_CMS_BASIC_DOCUMENT)) {
+
+			long groupId = _getFileEntryGroupId(
+				groupExternalReferenceCode, objectDefinition, scopeKey);
+
+			serviceBuilderFileEntry = _attachmentManager.getOrAddFileEntry(
+				objectField.getCompanyId(),
+				fileEntry.getExternalReferenceCode(), fileContent,
+				fileEntry.getName(), groupId, objectField.getObjectFieldId(),
+				serviceContext);
+
+			_createCMSObjectEntry(
+				groupId, objectDefinition, objectField, serviceBuilderFileEntry,
+				serviceContext, scopeKey);
 		}
 		else {
 			serviceBuilderFileEntry = _attachmentManager.getOrAddFileEntry(
