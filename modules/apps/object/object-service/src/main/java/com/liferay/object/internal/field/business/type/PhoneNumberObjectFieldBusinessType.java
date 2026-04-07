@@ -8,7 +8,9 @@ package com.liferay.object.internal.field.business.type;
 import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFieldSettingConstants;
+import com.liferay.object.exception.ObjectFieldSettingValueException;
 import com.liferay.object.field.business.type.ObjectFieldBusinessType;
+import com.liferay.object.internal.field.util.PhoneNumberObjectFieldValueUtil;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectFieldSetting;
 import com.liferay.object.petra.sql.dsl.DynamicObjectDefinitionTableUtil;
@@ -137,6 +139,12 @@ public class PhoneNumberObjectFieldBusinessType
 			DynamicObjectDefinitionTableUtil.getMaxLength(
 				objectField.getBusinessType()),
 			ObjectFieldSettingConstants.NAME_DEFAULT_VALUE, defaultValue);
+
+		if (!PhoneNumberObjectFieldValueUtil.isValid(defaultValue)) {
+			throw new ObjectFieldSettingValueException.InvalidValue(
+				objectField.getName(),
+				ObjectFieldSettingConstants.NAME_DEFAULT_VALUE, defaultValue);
+		}
 	}
 
 	@Reference
