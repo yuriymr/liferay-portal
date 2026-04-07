@@ -82,6 +82,7 @@ import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
 import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
 import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.internal.entry.util.ObjectEntrySearchUtil;
+import com.liferay.object.internal.field.util.PhoneNumberObjectFieldValueUtil;
 import com.liferay.object.internal.filter.parser.CurrentUserObjectFilterParser;
 import com.liferay.object.internal.filter.parser.DateRangeObjectFilterParser;
 import com.liferay.object.internal.filter.parser.EqualityOperatorsObjectFilterParser;
@@ -313,7 +314,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import javax.crypto.spec.SecretKeySpec;
 
@@ -7363,6 +7363,29 @@ public class ObjectEntryLocalServiceImpl
 		}
 	}
 
+	private void _validatePhoneNumber(
+			String phoneNumber, List<ValidationError> validationErrors,
+			ObjectField objectField)
+		throws PortalException {
+
+		_validateTextMaxLength(
+			DynamicObjectDefinitionTableUtil.getMaxLength(
+				objectField.getBusinessType()),
+			phoneNumber, objectField.getObjectFieldId(), objectField.getName(),
+			validationErrors);
+
+		if (phoneNumber.isEmpty()) {
+			return;
+		}
+
+		if (!PhoneNumberObjectFieldValueUtil.isValid(phoneNumber)) {
+			_handle(
+				new ObjectEntryValuesException.InvalidPhoneNumber(
+					objectField.getName()),
+				validationErrors);
+		}
+	}
+
 	private void _validateRequiredValues(
 			String defaultLanguageId, Map<String, Serializable> existingValues,
 			ObjectField objectField, boolean partialUpdate,
@@ -7752,22 +7775,7 @@ public class ObjectEntryLocalServiceImpl
 
 			String phoneNumber = GetterUtil.getString(value);
 
-			if (Validator.isNotNull(phoneNumber) &&
-				!_phoneNumberPattern.matcher(
-					phoneNumber
-				).matches()) {
-
-				_handle(
-					new ObjectEntryValuesException.InvalidPhoneNumber(
-						objectField.getName()),
-					validationErrors);
-			}
-
-			_validateTextMaxLength(
-				DynamicObjectDefinitionTableUtil.getMaxLength(
-					objectField.getBusinessType()),
-				phoneNumber, objectField.getObjectFieldId(),
-				objectField.getName(), validationErrors);
+			_validatePhoneNumber(phoneNumber, validationErrors, objectField);
 		}
 		else if (StringUtil.equals(
 					objectField.getDBType(),
@@ -7985,8 +7993,6 @@ public class ObjectEntryLocalServiceImpl
 		_objectRelationshipLocalServiceSnapshot = new Snapshot<>(
 			ObjectEntryLocalServiceImpl.class,
 			ObjectRelationshipLocalService.class, null);
-	private static final Pattern _phoneNumberPattern = Pattern.compile(
-		"^\\+?[0-9\\s\\-().]{1,50}$");
 
 	private static final Map<Class<?>, Function<Object, Serializable>>
 		_putValueFunctions =
