@@ -80,6 +80,7 @@ import com.liferay.object.field.builder.IntegerObjectFieldBuilder;
 import com.liferay.object.field.builder.LongIntegerObjectFieldBuilder;
 import com.liferay.object.field.builder.LongTextObjectFieldBuilder;
 import com.liferay.object.field.builder.MultiselectPicklistObjectFieldBuilder;
+import com.liferay.object.field.builder.PhoneNumberObjectFieldBuilder;
 import com.liferay.object.field.builder.PicklistObjectFieldBuilder;
 import com.liferay.object.field.builder.PrecisionDecimalObjectFieldBuilder;
 import com.liferay.object.field.builder.RichTextObjectFieldBuilder;
@@ -1781,6 +1782,28 @@ public class ObjectEntryLocalServiceTest {
 	}
 
 	@Test
+	public void testAddObjectEntryWithEmptyPhoneNumberObjectField()
+		throws Exception {
+
+		ObjectDefinition objectDefinition = _publishPhoneNumberObjectDefinition(
+			false);
+
+		try {
+			Assert.assertNotNull(
+				_addObjectEntry(
+					objectDefinition,
+					HashMapBuilder.<String, Serializable>put(
+						"phoneNumberField", ""
+					).build(),
+					ServiceContextTestUtil.getServiceContext()));
+		}
+		finally {
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				objectDefinition);
+		}
+	}
+
+	@Test
 	public void testAddObjectEntryWithEncryptedObjectField() throws Exception {
 		String key = ObjectFieldTestUtil.generateKey("AES");
 
@@ -2458,6 +2481,31 @@ public class ObjectEntryLocalServiceTest {
 	}
 
 	@Test
+	public void testAddObjectEntryWithInvalidPhoneNumberObjectField()
+		throws Exception {
+
+		ObjectDefinition objectDefinition = _publishPhoneNumberObjectDefinition(
+			false);
+
+		try {
+			_assertAddObjectEntryWithInvalidPhoneNumber(
+				objectDefinition, "5551234567");
+			_assertAddObjectEntryWithInvalidPhoneNumber(
+				objectDefinition, "abc123");
+			_assertAddObjectEntryWithInvalidPhoneNumber(
+				objectDefinition, "+1@555#1234");
+			_assertAddObjectEntryWithInvalidPhoneNumber(
+				objectDefinition, "+123456");
+			_assertAddObjectEntryWithInvalidPhoneNumber(
+				objectDefinition, "+1234567890123456");
+		}
+		finally {
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				objectDefinition);
+		}
+	}
+
+	@Test
 	public void testAddObjectEntryWithLocalizedAttachmentObjectField()
 		throws Exception {
 
@@ -2592,6 +2640,51 @@ public class ObjectEntryLocalServiceTest {
 				).build()));
 
 		_objectDefinitionLocalService.deleteObjectDefinition(objectDefinition);
+	}
+
+	@Test
+	public void testAddObjectEntryWithLocalizedPhoneNumberObjectField()
+		throws Exception {
+
+		ObjectField objectField = new PhoneNumberObjectFieldBuilder(
+		).labelMap(
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
+		).localized(
+			true
+		).name(
+			"phoneNumberField"
+		).build();
+
+		ObjectDefinition objectDefinition =
+			ObjectDefinitionTestUtil.publishObjectDefinition(
+				Collections.singletonList(objectField), false);
+
+		try {
+			ObjectEntry objectEntry = _addObjectEntry(
+				0, objectDefinition.getObjectDefinitionId(), HashMapBuilder.<String, Serializable>put(
+					objectField.getI18nObjectFieldName(),
+					HashMapBuilder.put(
+						"en_US", "+1 (555) 123-4567"
+					).put(
+						"pt_BR", "+55 (11) 5555-1234"
+					).build()
+				).build());
+
+			_assertObjectEntryLocalizedValues(
+				HashMapBuilder.<String, Serializable>put(
+					objectField.getI18nObjectFieldName(),
+					HashMapBuilder.put(
+						"en_US", "+15551234567"
+					).put(
+						"pt_BR", "+551155551234"
+					).build()
+				).build(),
+				objectEntry, objectField);
+		}
+		finally {
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				objectDefinition);
+		}
 	}
 
 	@Test
@@ -3360,6 +3453,87 @@ public class ObjectEntryLocalServiceTest {
 				objectDefinition1.getName(), objectDefinition2.getName()
 			},
 			_objectEntryLocalService, _objectRelationshipLocalService);
+	}
+
+	@Test
+	public void testAddObjectEntryWithUniquePhoneNumberObjectField()
+		throws Exception {
+
+		ObjectDefinition objectDefinition = _publishPhoneNumberObjectDefinition(
+			true);
+
+		try {
+			_addObjectEntry(
+				objectDefinition,
+				HashMapBuilder.<String, Serializable>put(
+					"phoneNumberField", "+1 (555) 123-4567"
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			try {
+				_addObjectEntry(
+					objectDefinition,
+					HashMapBuilder.<String, Serializable>put(
+						"phoneNumberField", "+15551234567"
+					).build(),
+					ServiceContextTestUtil.getServiceContext());
+
+				Assert.fail();
+			}
+			catch (ObjectEntryValuesException.UniqueValueConstraintViolation
+						objectEntryValuesException) {
+
+				Assert.assertEquals(
+					"the-x-is-already-in-use",
+					objectEntryValuesException.getMessageKey());
+			}
+		}
+		finally {
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				objectDefinition);
+		}
+	}
+
+	@Test
+	public void testAddObjectEntryWithValidPhoneNumberObjectField()
+		throws Exception {
+
+		ObjectDefinition objectDefinition = _publishPhoneNumberObjectDefinition(
+			false);
+
+		try {
+			ObjectEntry objectEntry = _addObjectEntry(
+				objectDefinition,
+				HashMapBuilder.<String, Serializable>put(
+					"phoneNumberField", "+15551234567"
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			Assert.assertEquals(
+				"+15551234567",
+				objectEntry.getValues(
+				).get(
+					"phoneNumberField"
+				));
+
+			objectEntry = _addObjectEntry(
+				objectDefinition,
+				HashMapBuilder.<String, Serializable>put(
+					"phoneNumberField", "+1 (555) 123-4567"
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			Assert.assertEquals(
+				"+15551234567",
+				objectEntry.getValues(
+				).get(
+					"phoneNumberField"
+				));
+		}
+		finally {
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				objectDefinition);
+		}
 	}
 
 	@Test
@@ -6639,6 +6813,42 @@ public class ObjectEntryLocalServiceTest {
 	}
 
 	@Test
+	public void testUpdateObjectEntryWithPhoneNumberObjectField()
+		throws Exception {
+
+		ObjectDefinition objectDefinition = _publishPhoneNumberObjectDefinition(
+			false);
+
+		try {
+			ObjectEntry objectEntry = _addObjectEntry(
+				objectDefinition,
+				HashMapBuilder.<String, Serializable>put(
+					"phoneNumberField", "+15551234567"
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			objectEntry = _objectEntryLocalService.updateObjectEntry(
+				TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+				objectEntry.getObjectEntryFolderId(),
+				HashMapBuilder.<String, Serializable>put(
+					"phoneNumberField", "+44 9876 543210"
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			Assert.assertEquals(
+				"+449876543210",
+				objectEntry.getValues(
+				).get(
+					"phoneNumberField"
+				));
+		}
+		finally {
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				objectDefinition);
+		}
+	}
+
+	@Test
 	public void testUpdateStatus() throws Exception {
 		PermissionChecker permissionChecker =
 			PermissionThreadLocal.getPermissionChecker();
@@ -7489,6 +7699,29 @@ public class ObjectEntryLocalServiceTest {
 			ContentTypes.TEXT_PLAIN);
 	}
 
+	private void _assertAddObjectEntryWithInvalidPhoneNumber(
+			ObjectDefinition objectDefinition, String phoneNumber)
+		throws Exception {
+
+		try {
+			_addObjectEntry(
+				objectDefinition,
+				HashMapBuilder.<String, Serializable>put(
+					"phoneNumberField", phoneNumber
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			Assert.fail();
+		}
+		catch (ObjectEntryValuesException.InvalidPhoneNumber
+					objectEntryValuesException) {
+
+			Assert.assertEquals(
+				"phoneNumberField",
+				objectEntryValuesException.getObjectFieldName());
+		}
+	}
+
 	private void _assertCommentsCount(
 		int expectedCount, ObjectDefinition objectDefinition,
 		ObjectEntry objectEntry) {
@@ -7888,6 +8121,29 @@ public class ObjectEntryLocalServiceTest {
 		return _objectDefinitionLocalService.publishCustomObjectDefinition(
 			TestPropsValues.getUserId(),
 			objectDefinition.getObjectDefinitionId());
+	}
+
+	private ObjectDefinition _publishPhoneNumberObjectDefinition(
+			boolean uniqueValues)
+		throws Exception {
+
+		return _publishCustomObjectDefinition(
+			Collections.singletonList(
+				new PhoneNumberObjectFieldBuilder(
+				).labelMap(
+					LocalizedMapUtil.getLocalizedMap(
+						RandomTestUtil.randomString())
+				).name(
+					"phoneNumberField"
+				).objectFieldSettings(
+					Collections.singletonList(
+						new ObjectFieldSettingBuilder(
+						).name(
+							ObjectFieldSettingConstants.NAME_UNIQUE_VALUES
+						).value(
+							String.valueOf(uniqueValues)
+						).build())
+				).build()));
 	}
 
 	private Closeable _registerTestObjectValidationRuleEngine(
