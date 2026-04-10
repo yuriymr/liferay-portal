@@ -1608,6 +1608,8 @@ public class ObjectFieldLocalServiceImpl
 		if (!oldObjectField.compareBusinessType(businessType)) {
 			_validateBusinessTypeAssignee(
 				newObjectField.getObjectDefinitionId(), businessType);
+			_validateBusinessTypePhoneNumber(
+				newObjectField.getCompanyId(), businessType);
 		}
 
 		_validateBusinessTypeEncrypted(
@@ -1741,6 +1743,9 @@ public class ObjectFieldLocalServiceImpl
 			ObjectDefinition objectDefinition, String businessType)
 		throws PortalException {
 
+		_validateBusinessTypePhoneNumber(
+			objectDefinition.getCompanyId(), businessType);
+
 		if (Objects.equals(
 				objectDefinition.getStorageType(),
 				ObjectDefinitionConstants.STORAGE_TYPE_SALESFORCE) &&
@@ -1834,6 +1839,22 @@ public class ObjectFieldLocalServiceImpl
 		}
 		catch (Exception exception) {
 			throw new PortalException(exception);
+		}
+	}
+
+	private void _validateBusinessTypePhoneNumber(
+			long companyId, String businessType)
+		throws ObjectFieldBusinessTypeException {
+
+		if (Objects.equals(
+				businessType,
+				ObjectFieldConstants.BUSINESS_TYPE_PHONE_NUMBER) &&
+			!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-70691")) {
+
+			_handleException(
+				new ObjectFieldBusinessTypeException(
+					"Business Type Phone Number is disabled"),
+				"businessType", businessType);
 		}
 	}
 

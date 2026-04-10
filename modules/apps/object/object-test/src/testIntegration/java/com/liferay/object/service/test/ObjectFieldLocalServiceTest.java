@@ -1891,6 +1891,7 @@ public class ObjectFieldLocalServiceTest {
 			modifiableSystemObjectDefinition);
 	}
 
+	@FeatureFlag("LPD-70691")
 	@Test
 	public void testObjectFieldSettings() throws Exception {
 
@@ -2746,7 +2747,7 @@ public class ObjectFieldLocalServiceTest {
 			).build());
 
 		_assertObjectEntryDefaultValue(
-			defaultValue, phoneNumberObjectField, new HashMap<>());
+			"+15551234567", phoneNumberObjectField, new HashMap<>());
 
 		Assert.assertNull(
 			_objectFieldSettingLocalService.fetchObjectFieldSetting(
