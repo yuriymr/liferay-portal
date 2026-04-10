@@ -2621,6 +2621,73 @@ public class ObjectEntryLocalServiceTest {
 			workflowDefinitionLink);
 	}
 
+	public void testAddObjectEntryWithFixedPrefixPhoneNumberObjectField()
+		throws Exception {
+
+		ObjectDefinition objectDefinition = _publishPhoneNumberObjectDefinition(
+			false, ObjectFieldSettingConstants.VALUE_FIXED, "+1");
+
+		try {
+			ObjectEntry objectEntry = _addObjectEntry(
+				objectDefinition,
+				HashMapBuilder.<String, Serializable>put(
+					"phoneNumberField", "5551234567"
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			Assert.assertEquals(
+				"+15551234567", objectEntry.getValues().get("phoneNumberField"));
+		}
+		finally {
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				objectDefinition);
+		}
+	}
+
+	@Test
+	public void testAddObjectEntryWithFixedPrefixPhoneNumberObjectFieldAndPrefix()
+		throws Exception {
+
+		ObjectDefinition objectDefinition = _publishPhoneNumberObjectDefinition(
+			false, ObjectFieldSettingConstants.VALUE_FIXED, "+55");
+
+		try {
+			ObjectEntry objectEntry = _addObjectEntry(
+				objectDefinition,
+				HashMapBuilder.<String, Serializable>put(
+					"phoneNumberField", "+55 (81) 91111-2222"
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			Assert.assertEquals(
+				"+5581911112222",
+				objectEntry.getValues().get("phoneNumberField"));
+		}
+		finally {
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				objectDefinition);
+		}
+	}
+
+	@Test
+	public void
+			testAddObjectEntryWithFixedPrefixPhoneNumberObjectFieldAndWrongPrefix()
+		throws Exception {
+
+		ObjectDefinition objectDefinition = _publishPhoneNumberObjectDefinition(
+			false, ObjectFieldSettingConstants.VALUE_FIXED, "+55");
+
+		try {
+			_assertAddObjectEntryWithInvalidPhoneNumber(
+				objectDefinition, "+1 (143) 123-1234");
+		}
+		finally {
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				objectDefinition);
+		}
+	}
+
+	@Test
 	public void testAddObjectEntryWithInvalidPhoneNumberObjectField()
 		throws Exception {
 
@@ -8332,6 +8399,40 @@ public class ObjectEntryLocalServiceTest {
 			boolean uniqueValues)
 		throws Exception {
 
+		return _publishPhoneNumberObjectDefinition(
+			uniqueValues, ObjectFieldSettingConstants.VALUE_DEFINE_BY_USER,
+			null);
+	}
+
+	private ObjectDefinition _publishPhoneNumberObjectDefinition(
+			boolean uniqueValues, String prefixType, String prefix)
+		throws Exception {
+
+		List<ObjectFieldSetting> objectFieldSettings = new ArrayList<>(
+			Arrays.asList(
+				new ObjectFieldSettingBuilder(
+				).name(
+					ObjectFieldSettingConstants.NAME_PREFIX_TYPE
+				).value(
+					prefixType
+				).build(),
+				new ObjectFieldSettingBuilder(
+				).name(
+					ObjectFieldSettingConstants.NAME_UNIQUE_VALUES
+				).value(
+					String.valueOf(uniqueValues)
+				).build()));
+
+		if (prefix != null) {
+			objectFieldSettings.add(
+				new ObjectFieldSettingBuilder(
+				).name(
+					ObjectFieldSettingConstants.NAME_PREFIX
+				).value(
+					prefix
+				).build());
+		}
+
 		return _publishCustomObjectDefinition(
 			Collections.singletonList(
 				new PhoneNumberObjectFieldBuilder(
@@ -8341,13 +8442,7 @@ public class ObjectEntryLocalServiceTest {
 				).name(
 					"phoneNumberField"
 				).objectFieldSettings(
-					Collections.singletonList(
-						new ObjectFieldSettingBuilder(
-						).name(
-							ObjectFieldSettingConstants.NAME_UNIQUE_VALUES
-						).value(
-							String.valueOf(uniqueValues)
-						).build())
+					objectFieldSettings
 				).build()));
 	}
 
