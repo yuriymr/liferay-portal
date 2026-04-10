@@ -117,6 +117,81 @@ public class PhoneNumberObjectFieldBusinessTypeTest {
 						).build()));
 	}
 
+	@Test
+	public void testValidateObjectFieldSettingsPrefix() throws Exception {
+		_objectFieldBusinessType.validateObjectFieldSettings(
+			_objectField,
+			Arrays.asList(
+				new ObjectFieldSettingBuilder(
+				).name(
+					ObjectFieldSettingConstants.NAME_PREFIX_TYPE
+				).value(
+					ObjectFieldSettingConstants.VALUE_DEFINE_BY_USER
+				).build()));
+
+		_objectFieldBusinessType.validateObjectFieldSettings(
+			_objectField,
+			Arrays.asList(
+				new ObjectFieldSettingBuilder(
+				).name(
+					ObjectFieldSettingConstants.NAME_PREFIX_TYPE
+				).value(
+					ObjectFieldSettingConstants.VALUE_FIXED
+				).build(),
+				new ObjectFieldSettingBuilder(
+				).name(
+					ObjectFieldSettingConstants.NAME_PREFIX
+				).value(
+					"+1"
+				).build()));
+
+		AssertUtils.assertFailure(
+			ObjectFieldSettingValueException.InvalidValue.class,
+			"The value definedByUser of setting \"prefixType\" is invalid " +
+				"for object field \"phoneNumberField\"",
+			() -> _objectFieldBusinessType.validateObjectFieldSettings(
+				_objectField,
+				Arrays.asList(
+					new ObjectFieldSettingBuilder(
+					).name(
+						ObjectFieldSettingConstants.NAME_PREFIX_TYPE
+					).value(
+						"definedByUser"
+					).build())));
+		AssertUtils.assertFailure(
+			ObjectFieldSettingValueException.InvalidValue.class,
+			"The value 1 of setting \"prefix\" is invalid for object field " +
+				"\"phoneNumberField\"",
+			() -> _objectFieldBusinessType.validateObjectFieldSettings(
+				_objectField,
+				Arrays.asList(
+					new ObjectFieldSettingBuilder(
+					).name(
+						ObjectFieldSettingConstants.NAME_PREFIX_TYPE
+					).value(
+						ObjectFieldSettingConstants.VALUE_FIXED
+					).build(),
+					new ObjectFieldSettingBuilder(
+					).name(
+						ObjectFieldSettingConstants.NAME_PREFIX
+					).value(
+						"1"
+					).build())));
+		AssertUtils.assertFailure(
+			ObjectFieldSettingValueException.MissingRequiredValues.class,
+			"The settings \"prefix\" are required for object field " +
+				"\"phoneNumberField\"",
+			() -> _objectFieldBusinessType.validateObjectFieldSettings(
+				_objectField,
+				Arrays.asList(
+					new ObjectFieldSettingBuilder(
+					).name(
+						ObjectFieldSettingConstants.NAME_PREFIX_TYPE
+					).value(
+						ObjectFieldSettingConstants.VALUE_FIXED
+					).build())));
+	}
+
 	private ObjectDefinition _objectDefinition;
 	private ObjectField _objectField;
 	private ObjectFieldBusinessType _objectFieldBusinessType;

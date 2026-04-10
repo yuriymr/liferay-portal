@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -44,6 +45,8 @@ public class PhoneNumberObjectFieldBusinessType
 			ObjectFieldSettingConstants.NAME_DEFAULT_VALUE,
 			ObjectFieldSettingConstants.NAME_DEFAULT_VALUE_TYPE,
 			ObjectFieldSettingConstants.NAME_MAX_LENGTH,
+			ObjectFieldSettingConstants.NAME_PREFIX,
+			ObjectFieldSettingConstants.NAME_PREFIX_TYPE,
 			ObjectFieldSettingConstants.NAME_SHOW_COUNTER,
 			ObjectFieldSettingConstants.NAME_UNIQUE_VALUES);
 	}
@@ -100,6 +103,7 @@ public class PhoneNumberObjectFieldBusinessType
 			objectField.getName(),
 			ObjectFieldSettingConstants.NAME_UNIQUE_VALUES,
 			objectFieldSettingsValues);
+		_validatePrefixType(objectField, objectFieldSettingsValues);
 		validateRelatedObjectFieldSettings(
 			objectField, ObjectFieldSettingConstants.NAME_SHOW_COUNTER,
 			ObjectFieldSettingConstants.NAME_MAX_LENGTH,
@@ -137,6 +141,68 @@ public class PhoneNumberObjectFieldBusinessType
 				ObjectFieldSettingConstants.NAME_DEFAULT_VALUE, defaultValue);
 		}
 	}
+
+	private void _validatePrefix(
+			ObjectField objectField,
+			Map<String, String> objectFieldSettingsValues)
+		throws PortalException {
+
+		String prefix = objectFieldSettingsValues.get(
+			ObjectFieldSettingConstants.NAME_PREFIX);
+
+		if (Validator.isNull(prefix)) {
+			return;
+		}
+
+		if (!_prefixPattern.matcher(
+				prefix
+			).matches()) {
+
+			throw new ObjectFieldSettingValueException.InvalidValue(
+				objectField.getName(), ObjectFieldSettingConstants.NAME_PREFIX,
+				prefix);
+		}
+	}
+
+	private void _validatePrefixType(
+			ObjectField objectField,
+			Map<String, String> objectFieldSettingsValues)
+		throws PortalException {
+
+		String prefixType = objectFieldSettingsValues.get(
+			ObjectFieldSettingConstants.NAME_PREFIX_TYPE);
+
+		if (Validator.isNull(prefixType)) {
+			return;
+		}
+
+		if (!SetUtil.fromArray(
+				ObjectFieldSettingConstants.VALUE_DEFINE_BY_USER,
+				ObjectFieldSettingConstants.VALUE_FIXED
+			).contains(
+				prefixType
+			)) {
+
+			throw new ObjectFieldSettingValueException.InvalidValue(
+				objectField.getName(),
+				ObjectFieldSettingConstants.NAME_PREFIX_TYPE, prefixType);
+		}
+
+		if (prefixType.equals(ObjectFieldSettingConstants.VALUE_FIXED) &&
+			Validator.isNull(
+				objectFieldSettingsValues.get(
+					ObjectFieldSettingConstants.NAME_PREFIX))) {
+
+			throw new ObjectFieldSettingValueException.MissingRequiredValues(
+				objectField.getName(),
+				SetUtil.fromArray(ObjectFieldSettingConstants.NAME_PREFIX));
+		}
+
+		_validatePrefix(objectField, objectFieldSettingsValues);
+	}
+
+	private static final Pattern _prefixPattern = Pattern.compile(
+		"^\\+[1-9][0-9]{0,2}$");
 
 	@Reference
 	private Language _language;
