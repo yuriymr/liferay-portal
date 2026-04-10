@@ -420,7 +420,11 @@ public class ObjectEntryLocalServiceImpl
 			_objectFieldLocalService.getObjectFields(
 				objectDefinition.getObjectDefinitionId());
 
-		_normalizePhoneNumberValues(objectFields, values);
+		if (FeatureFlagManagerUtil.isEnabled(
+				objectDefinition.getCompanyId(), "LPD-70691")) {
+
+			_normalizePhoneNumberValues(objectFields, values);
+		}
 
 		Map<ObjectField, Set<DLFileEntry>> dlFileEntriesMap = new HashMap<>();
 		long objectEntryId = counterLocalService.increment();
@@ -6771,7 +6775,11 @@ public class ObjectEntryLocalServiceImpl
 			_objectFieldLocalService.getObjectFields(
 				objectDefinition.getObjectDefinitionId());
 
-		_normalizePhoneNumberValues(objectFields, values);
+		if (FeatureFlagManagerUtil.isEnabled(
+				objectDefinition.getCompanyId(), "LPD-70691")) {
+
+			_normalizePhoneNumberValues(objectFields, values);
+		}
 
 		Map<ObjectField, Set<DLFileEntry>> dlFileEntriesMap = new HashMap<>();
 
@@ -7889,7 +7897,9 @@ public class ObjectEntryLocalServiceImpl
 				}
 			}
 		}
-		else if (objectField.compareBusinessType(
+		else if (FeatureFlagManagerUtil.isEnabled(
+					objectField.getCompanyId(), "LPD-70691") &&
+				 objectField.compareBusinessType(
 					ObjectFieldConstants.BUSINESS_TYPE_PHONE_NUMBER)) {
 
 			String phoneNumber = GetterUtil.getString(value);
