@@ -1859,6 +1859,7 @@ public class ObjectEntryLocalServiceTest {
 		Assert.assertTrue(objectEntry.isApproved());
 	}
 
+	@FeatureFlag("LPD-70691")
 	@Test
 	public void testAddObjectEntryWithEmptyPhoneNumberObjectField()
 		throws Exception {
@@ -2558,6 +2559,7 @@ public class ObjectEntryLocalServiceTest {
 			_objectEntryLocalService, _objectRelationshipLocalService);
 	}
 
+	@FeatureFlag("LPD-70691")
 	@Test
 	public void testAddObjectEntryWithHierarchyAndWorkflow() throws Exception {
 		ObjectDefinition objectDefinitionA =
@@ -2644,6 +2646,7 @@ public class ObjectEntryLocalServiceTest {
 		}
 	}
 
+	@FeatureFlag("LPD-70691")
 	@Test
 	public void testAddObjectEntryWithFixedPrefixPhoneNumberObjectFieldAndPrefix()
 		throws Exception {
@@ -2669,6 +2672,7 @@ public class ObjectEntryLocalServiceTest {
 		}
 	}
 
+	@FeatureFlag("LPD-70691")
 	@Test
 	public void
 			testAddObjectEntryWithFixedPrefixPhoneNumberObjectFieldAndWrongPrefix()
@@ -2687,6 +2691,7 @@ public class ObjectEntryLocalServiceTest {
 		}
 	}
 
+	@FeatureFlag("LPD-70691")
 	@Test
 	public void testAddObjectEntryWithInvalidPhoneNumberObjectField()
 		throws Exception {
@@ -2849,6 +2854,7 @@ public class ObjectEntryLocalServiceTest {
 		_objectDefinitionLocalService.deleteObjectDefinition(objectDefinition);
 	}
 
+	@FeatureFlag("LPD-70691")
 	@Test
 	public void testAddObjectEntryWithLocalizedPhoneNumberObjectField()
 		throws Exception {
@@ -3662,6 +3668,7 @@ public class ObjectEntryLocalServiceTest {
 			_objectEntryLocalService, _objectRelationshipLocalService);
 	}
 
+	@FeatureFlag("LPD-70691")
 	@Test
 	public void testAddObjectEntryWithUniquePhoneNumberObjectField()
 		throws Exception {
@@ -3701,6 +3708,7 @@ public class ObjectEntryLocalServiceTest {
 		}
 	}
 
+	@FeatureFlag("LPD-70691")
 	@Test
 	public void testAddObjectEntryWithValidPhoneNumberObjectField()
 		throws Exception {
@@ -7084,6 +7092,7 @@ public class ObjectEntryLocalServiceTest {
 		}
 	}
 
+	@FeatureFlag("LPD-70691")
 	@Test
 	public void testUpdateObjectEntryWithPhoneNumberObjectField()
 		throws Exception {
