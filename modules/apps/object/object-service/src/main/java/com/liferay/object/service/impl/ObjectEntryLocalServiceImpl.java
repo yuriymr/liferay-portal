@@ -4748,6 +4748,41 @@ public class ObjectEntryLocalServiceImpl
 		return permissionWherePredicate;
 	}
 
+	private String _getPhoneNumberValue(
+			ObjectField objectField, String phoneNumber)
+		throws PortalException {
+
+		if (Validator.isNull(phoneNumber) ||
+			!StringUtil.equals(
+				ObjectFieldSettingUtil.getValue(
+					ObjectFieldSettingConstants.NAME_PREFIX_TYPE, objectField),
+				ObjectFieldSettingConstants.VALUE_FIXED)) {
+
+			return phoneNumber;
+		}
+
+		String prefix = ObjectFieldSettingUtil.getValue(
+			ObjectFieldSettingConstants.NAME_PREFIX, objectField);
+
+		if (Validator.isNull(prefix)) {
+			return phoneNumber;
+		}
+
+		if (StringUtil.startsWith(phoneNumber, StringPool.PLUS)) {
+			String normalizedPhoneNumber =
+				PhoneNumberObjectFieldValueUtil.normalize(phoneNumber);
+
+			if (StringUtil.startsWith(normalizedPhoneNumber, prefix)) {
+				return phoneNumber;
+			}
+
+			throw new ObjectEntryValuesException.InvalidPhoneNumber(
+				objectField.getName());
+		}
+
+		return prefix + phoneNumber;
+	}
+
 	private Column<?, Long> _getPrimaryKeyColumn(
 		DynamicObjectDefinitionTable dynamicObjectDefinitionTable,
 		DynamicObjectDefinitionTable extensionDynamicObjectDefinitionTable,
@@ -5791,7 +5826,8 @@ public class ObjectEntryLocalServiceImpl
 	}
 
 	private void _normalizePhoneNumberValues(
-		List<ObjectField> objectFields, Map<String, Serializable> values) {
+			List<ObjectField> objectFields, Map<String, Serializable> values)
+		throws PortalException {
 
 		for (ObjectField objectField : objectFields) {
 			if (!objectField.compareBusinessType(
@@ -5804,8 +5840,10 @@ public class ObjectEntryLocalServiceImpl
 				values.put(
 					objectField.getName(),
 					PhoneNumberObjectFieldValueUtil.normalize(
-						GetterUtil.getString(
-							values.get(objectField.getName()))));
+						_getPhoneNumberValue(
+							objectField,
+							GetterUtil.getString(
+								values.get(objectField.getName())))));
 			}
 
 			Map<String, Serializable> localizedValues =
@@ -5821,7 +5859,9 @@ public class ObjectEntryLocalServiceImpl
 
 				entry.setValue(
 					PhoneNumberObjectFieldValueUtil.normalize(
-						GetterUtil.getString(entry.getValue())));
+						_getPhoneNumberValue(
+							objectField,
+							GetterUtil.getString(entry.getValue()))));
 			}
 		}
 	}
