@@ -2634,7 +2634,7 @@ public class ObjectEntryLocalServiceTest {
 			},
 			_objectEntryLocalService, _objectRelationshipLocalService);
 	}
-	
+
 	@Test
 	public void testAddObjectEntryWithHierarchyAndWorkflow() throws Exception {
 		ObjectDefinition objectDefinitionA =
@@ -8264,7 +8264,7 @@ public class ObjectEntryLocalServiceTest {
 
 			resultSet.next();
 
-			return resultSet.getLong("count");
+			return resultSet.getInt("count");
 		}
 	}
 

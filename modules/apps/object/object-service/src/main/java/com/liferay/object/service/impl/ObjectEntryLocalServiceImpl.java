@@ -3300,7 +3300,7 @@ public class ObjectEntryLocalServiceImpl
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				resultSet.next();
 
-				return resultSet.getLong("count");
+				return resultSet.getInt("count");
 			}
 		}
 		catch (SQLException sqlException) {
@@ -7434,7 +7434,7 @@ public class ObjectEntryLocalServiceImpl
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				resultSet.next();
 
-				count = resultSet.getLong("count");
+				count = resultSet.getInt("count");
 			}
 		}
 		catch (SQLException sqlException) {
@@ -7476,7 +7476,7 @@ public class ObjectEntryLocalServiceImpl
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				resultSet.next();
 
-				count = resultSet.getLong("count");
+				count = resultSet.getInt("count");
 			}
 		}
 		catch (SQLException sqlException) {
@@ -7900,7 +7900,7 @@ public class ObjectEntryLocalServiceImpl
 		else if (FeatureFlagManagerUtil.isEnabled(
 					objectField.getCompanyId(), "LPD-70691") &&
 				 objectField.compareBusinessType(
-					ObjectFieldConstants.BUSINESS_TYPE_PHONE_NUMBER)) {
+					 ObjectFieldConstants.BUSINESS_TYPE_PHONE_NUMBER)) {
 
 			String phoneNumber = GetterUtil.getString(value);
 
