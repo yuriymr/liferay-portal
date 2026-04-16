@@ -121,6 +121,19 @@ const fieldSettingsMap = new Map<string, ObjectFieldSetting[]>([
 		],
 	],
 	[
+		'Email',
+		[
+			{
+				name: 'autocomplete',
+				value: true,
+			},
+			{
+				name: 'domains',
+				value: '',
+			},
+		],
+	],
+	[
 		'LongText',
 		[
 			{
@@ -803,7 +816,8 @@ export default function ObjectFieldFormBase({
 					</ClayForm.Group>
 				)}
 
-			{(values.businessType === 'Text' ||
+			{(values.businessType === 'Email' ||
+				values.businessType === 'Text' ||
 				values.businessType === 'Integer') && (
 				<UniqueValues
 					disabled={disabled}

@@ -10,6 +10,7 @@ export const DEFAULT_VALUE_SUPPORTED_BUSINESS_TYPES = [
 	'Date',
 	'DateTime',
 	'Decimal',
+	'Email',
 	'Integer',
 	'LongInteger',
 	'LongText',

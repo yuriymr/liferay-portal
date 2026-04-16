@@ -208,6 +208,16 @@ public class GetObjectFieldInfoMVCResourceCommand
 					DDMExpressionFunction.PAST_DATES,
 					DDMExpressionFunction.RANGE)
 			).put(
+				ObjectFieldConstants.BUSINESS_TYPE_EMAIL,
+				ListUtil.fromArray(
+					DDMExpressionFunction.CONDITION,
+					DDMExpressionFunction.CONTAINS,
+					DDMExpressionFunction.IS_AN_EMAIL,
+					DDMExpressionFunction.IS_EMPTY,
+					DDMExpressionFunction.IS_EQUAL_TO,
+					DDMExpressionFunction.IS_NOT_EQUAL_TO,
+					DDMExpressionFunction.OLD_VALUE)
+			).put(
 				ObjectFieldConstants.BUSINESS_TYPE_DATE,
 				ListUtil.fromArray(
 					DDMExpressionFunction.ADD_DAYS,

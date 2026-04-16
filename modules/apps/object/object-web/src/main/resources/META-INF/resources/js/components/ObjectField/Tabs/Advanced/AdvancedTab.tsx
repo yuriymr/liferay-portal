@@ -10,6 +10,7 @@ import React, {ElementType} from 'react';
 import {DEFAULT_VALUE_SUPPORTED_BUSINESS_TYPES} from '../../../../utils/constants';
 import {ObjectFieldErrors} from '../../ObjectFieldFormBase';
 import {DefaultValueContainer} from './DefaultValueContainer';
+import {EmailSettingsContainer} from './EmailSettingsContainer';
 import {ReadOnlyContainer} from './ReadOnlyContainer';
 
 interface AdvancedTabProps {
@@ -23,7 +24,7 @@ interface AdvancedTabProps {
 	isRootDescendantNode: boolean;
 	learnResources: ILearnResourceContext;
 	modelBuilder?: boolean;
-	onSubmit?: () => void;
+	onSubmit?: (values?: Partial<ObjectField>) => void;
 	readOnlySidebarElements: SidebarCategory[];
 	setValues: (value: Partial<ObjectField>) => void;
 	values: Partial<ObjectField>;
@@ -61,6 +62,23 @@ export function AdvancedTab({
 
 	return (
 		<>
+			{values.businessType === 'Email' && (
+				<ContainerWrapper
+					collapsable
+					defaultExpanded
+					disabled={false}
+					displayTitle={Liferay.Language.get('autocomplete')}
+					displayType="unstyled"
+					title={Liferay.Language.get('autocomplete')}
+				>
+					<EmailSettingsContainer
+						onSubmit={onSubmit}
+						setValues={setValues}
+						values={values}
+					/>
+				</ContainerWrapper>
+			)}
+
 			{isDefaultStorageType && (
 				<ContainerWrapper
 					collapsable

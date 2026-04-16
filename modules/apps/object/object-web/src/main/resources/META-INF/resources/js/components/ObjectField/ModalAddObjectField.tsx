@@ -110,6 +110,7 @@ export function ModalAddObjectField({
 		values.businessType === 'Date' ||
 		values.businessType === 'DateTime' ||
 		values.businessType === 'Decimal' ||
+		values.businessType === 'Email' ||
 		values.businessType === 'Integer' ||
 		values.businessType === 'LongInteger' ||
 		values.businessType === 'MultiselectPicklist' ||

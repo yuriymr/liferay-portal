@@ -48,9 +48,9 @@ describe('Check the return for all object field business types)', () => {
 		);
 	});
 
-	it('returns decimal language key', () => {
-		expect(getObjectFieldBusinessTypeLabel('Decimal')).toStrictEqual(
-			'decimal'
+	it('returns email language key', () => {
+		expect(getObjectFieldBusinessTypeLabel('Email')).toStrictEqual(
+			'email'
 		);
 	});
 
