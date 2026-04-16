@@ -83,6 +83,7 @@ import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
 import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
 import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.internal.entry.util.ObjectEntrySearchUtil;
+import com.liferay.object.internal.field.util.EmailObjectFieldValueUtil;
 import com.liferay.object.internal.field.util.PhoneNumberObjectFieldValueUtil;
 import com.liferay.object.internal.filter.parser.CurrentUserObjectFilterParser;
 import com.liferay.object.internal.filter.parser.DateRangeObjectFilterParser;
@@ -419,6 +420,12 @@ public class ObjectEntryLocalServiceImpl
 		List<ObjectField> objectFields =
 			_objectFieldLocalService.getObjectFields(
 				objectDefinition.getObjectDefinitionId());
+
+		if (FeatureFlagManagerUtil.isEnabled(
+				objectDefinition.getCompanyId(), "LPD-70673")) {
+
+			_normalizeEmailValues(objectFields, values);
+		}
 
 		if (FeatureFlagManagerUtil.isEnabled(
 				objectDefinition.getCompanyId(), "LPD-70691")) {
@@ -5865,6 +5872,42 @@ public class ObjectEntryLocalServiceImpl
 		return objectEntry;
 	}
 
+	private void _normalizeEmailValues(
+		List<ObjectField> objectFields, Map<String, Serializable> values) {
+
+		for (ObjectField objectField : objectFields) {
+			if (!objectField.compareBusinessType(
+					ObjectFieldConstants.BUSINESS_TYPE_EMAIL)) {
+
+				continue;
+			}
+
+			if (values.containsKey(objectField.getName())) {
+				values.put(
+					objectField.getName(),
+					EmailObjectFieldValueUtil.normalize(
+						GetterUtil.getString(
+							values.get(objectField.getName()))));
+			}
+
+			Map<String, Serializable> localizedValues =
+				(Map<String, Serializable>)values.get(
+					objectField.getI18nObjectFieldName());
+
+			if (MapUtil.isEmpty(localizedValues)) {
+				continue;
+			}
+
+			for (Map.Entry<String, Serializable> entry :
+					localizedValues.entrySet()) {
+
+				entry.setValue(
+					EmailObjectFieldValueUtil.normalize(
+						GetterUtil.getString(entry.getValue())));
+			}
+		}
+	}
+
 	private void _normalizePhoneNumberValues(
 			List<ObjectField> objectFields, Map<String, Serializable> values)
 		throws PortalException {
@@ -6776,6 +6819,12 @@ public class ObjectEntryLocalServiceImpl
 				objectDefinition.getObjectDefinitionId());
 
 		if (FeatureFlagManagerUtil.isEnabled(
+				objectDefinition.getCompanyId(), "LPD-70673")) {
+
+			_normalizeEmailValues(objectFields, values);
+		}
+
+		if (FeatureFlagManagerUtil.isEnabled(
 				objectDefinition.getCompanyId(), "LPD-70691")) {
 
 			_normalizePhoneNumberValues(objectFields, values);
@@ -7513,6 +7562,29 @@ public class ObjectEntryLocalServiceImpl
 		}
 	}
 
+	private void _validateEmailAddress(
+			String emailAddress, List<ValidationError> validationErrors,
+			ObjectField objectField)
+		throws PortalException {
+
+		_validateTextMaxLength(
+			DynamicObjectDefinitionTableUtil.getMaxLength(
+				objectField.getBusinessType()),
+			emailAddress, objectField.getObjectFieldId(),
+			objectField.getName(), validationErrors);
+
+		if (emailAddress.isEmpty()) {
+			return;
+		}
+
+		if (!EmailObjectFieldValueUtil.isValid(emailAddress)) {
+			_handle(
+				new ObjectEntryValuesException.InvalidEmailAddress(
+					objectField.getName()),
+				validationErrors);
+		}
+	}
+
 	private void _validateRequiredValues(
 			String defaultLanguageId, Map<String, Serializable> existingValues,
 			ObjectField objectField, boolean partialUpdate,
@@ -7896,6 +7968,15 @@ public class ObjectEntryLocalServiceImpl
 						validationErrors);
 				}
 			}
+		}
+		else if (FeatureFlagManagerUtil.isEnabled(
+					objectField.getCompanyId(), "LPD-70673") &&
+				 objectField.compareBusinessType(
+					 ObjectFieldConstants.BUSINESS_TYPE_EMAIL)) {
+
+			String emailAddress = GetterUtil.getString(value);
+
+			_validateEmailAddress(emailAddress, validationErrors, objectField);
 		}
 		else if (FeatureFlagManagerUtil.isEnabled(
 					objectField.getCompanyId(), "LPD-70691") &&

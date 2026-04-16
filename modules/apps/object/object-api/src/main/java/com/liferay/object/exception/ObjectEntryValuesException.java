@@ -203,6 +203,25 @@ public class ObjectEntryValuesException extends PortalException {
 
 	}
 
+	public static class InvalidEmailAddress extends ObjectEntryValuesException {
+
+		public InvalidEmailAddress(String objectFieldName) {
+			super(
+				Collections.emptyList(),
+				"Please enter a valid email address.",
+				"please-enter-a-valid-email-address");
+
+			_objectFieldName = objectFieldName;
+		}
+
+		public String getObjectFieldName() {
+			return _objectFieldName;
+		}
+
+		private final String _objectFieldName;
+
+	}
+
 	public static class InvalidObjectField extends ObjectEntryValuesException {
 
 		public InvalidObjectField(
