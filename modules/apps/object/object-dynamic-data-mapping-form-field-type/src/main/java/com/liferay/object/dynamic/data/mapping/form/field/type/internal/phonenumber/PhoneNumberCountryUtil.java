@@ -12,12 +12,15 @@ import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Marco Leo
@@ -42,6 +45,8 @@ public class PhoneNumberCountryUtil {
 			return countriesList;
 		}
 
+		Set<String> availableLocaleCountryA2s = _getAvailableLocaleCountryA2s();
+
 		Locale locale = LocaleThreadLocal.getThemeDisplayLocale();
 
 		if (locale == null) {
@@ -50,6 +55,10 @@ public class PhoneNumberCountryUtil {
 
 		for (Country country :
 				countryLocalService.getCompanyCountries(companyId, true)) {
+
+			if (!availableLocaleCountryA2s.contains(country.getA2())) {
+				continue;
+			}
 
 			String idd = country.getIdd();
 
@@ -68,6 +77,23 @@ public class PhoneNumberCountryUtil {
 		}
 
 		return countriesList;
+	}
+
+	private static Set<String> _getAvailableLocaleCountryA2s() {
+		Set<String> countryA2s = new HashSet<>();
+
+		for (String languageId : PropsValues.LOCALES) {
+			Locale availableLocale = LocaleUtil.fromLanguageId(
+				languageId, false);
+
+			String countryA2 = availableLocale.getCountry();
+
+			if (Validator.isNotNull(countryA2)) {
+				countryA2s.add(countryA2);
+			}
+		}
+
+		return countryA2s;
 	}
 
 }
