@@ -77,6 +77,7 @@ import com.liferay.object.field.builder.BooleanObjectFieldBuilder;
 import com.liferay.object.field.builder.DateObjectFieldBuilder;
 import com.liferay.object.field.builder.DateTimeObjectFieldBuilder;
 import com.liferay.object.field.builder.DecimalObjectFieldBuilder;
+import com.liferay.object.field.builder.EmailObjectFieldBuilder;
 import com.liferay.object.field.builder.EncryptedObjectFieldBuilder;
 import com.liferay.object.field.builder.FormulaObjectFieldBuilder;
 import com.liferay.object.field.builder.IntegerObjectFieldBuilder;
@@ -1875,6 +1876,134 @@ public class ObjectEntryLocalServiceTest {
 						"phoneNumberField", ""
 					).build(),
 					ServiceContextTestUtil.getServiceContext()));
+		}
+		finally {
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				objectDefinition);
+		}
+	}
+
+	@FeatureFlag("LPD-70673")
+	@Test
+	public void testAddObjectEntryWithEmailObjectFieldDefaultValue()
+		throws Exception {
+
+		ObjectDefinition objectDefinition = _publishEmailObjectDefinition(
+			Arrays.asList(
+				new ObjectFieldSettingBuilder(
+				).name(
+					ObjectFieldSettingConstants.NAME_DEFAULT_VALUE
+				).value(
+					"User@Example.com"
+				).build(),
+				new ObjectFieldSettingBuilder(
+				).name(
+					ObjectFieldSettingConstants.NAME_DEFAULT_VALUE_TYPE
+				).value(
+					ObjectFieldSettingConstants.VALUE_INPUT_AS_VALUE
+				).build()));
+
+		try {
+			ObjectEntry objectEntry = _addObjectEntry(
+				objectDefinition, new HashMap<>(),
+				ServiceContextTestUtil.getServiceContext());
+
+			Assert.assertEquals(
+				"user@example.com",
+				objectEntry.getValues(
+				).get(
+					"emailField"
+				));
+		}
+		finally {
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				objectDefinition);
+		}
+	}
+
+	@FeatureFlag("LPD-70673")
+	@Test
+	public void testAddObjectEntryWithInvalidEmailObjectField()
+		throws Exception {
+
+		ObjectDefinition objectDefinition = _publishEmailObjectDefinition(
+			false);
+
+		try {
+			_assertAddObjectEntryWithInvalidEmailAddress(
+				objectDefinition, "user");
+			_assertAddObjectEntryWithInvalidEmailAddress(
+				objectDefinition, "user@");
+			_assertAddObjectEntryWithInvalidEmailAddress(
+				objectDefinition, "user@example");
+		}
+		finally {
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				objectDefinition);
+		}
+	}
+
+	@FeatureFlag("LPD-70673")
+	@Test
+	public void testAddObjectEntryWithUniqueEmailObjectField()
+		throws Exception {
+
+		ObjectDefinition objectDefinition = _publishEmailObjectDefinition(true);
+
+		try {
+			_addObjectEntry(
+				objectDefinition,
+				HashMapBuilder.<String, Serializable>put(
+					"emailField", "User@Example.com"
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			try {
+				_addObjectEntry(
+					objectDefinition,
+					HashMapBuilder.<String, Serializable>put(
+						"emailField", "user@example.com"
+					).build(),
+					ServiceContextTestUtil.getServiceContext());
+
+				Assert.fail();
+			}
+			catch (ObjectEntryValuesException.UniqueValueConstraintViolation
+						objectEntryValuesException) {
+
+				Assert.assertEquals(
+					"the-x-is-already-in-use",
+					objectEntryValuesException.getMessageKey());
+			}
+		}
+		finally {
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				objectDefinition);
+		}
+	}
+
+	@FeatureFlag("LPD-70673")
+	@Test
+	public void testAddObjectEntryWithValidEmailObjectField()
+		throws Exception {
+
+		ObjectDefinition objectDefinition = _publishEmailObjectDefinition(
+			false);
+
+		try {
+			ObjectEntry objectEntry = _addObjectEntry(
+				objectDefinition,
+				HashMapBuilder.<String, Serializable>put(
+					"emailField", "User@Example.com"
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			Assert.assertEquals(
+				"user@example.com",
+				objectEntry.getValues(
+				).get(
+					"emailField"
+				));
 		}
 		finally {
 			_objectDefinitionLocalService.deleteObjectDefinition(
@@ -7100,6 +7229,41 @@ public class ObjectEntryLocalServiceTest {
 		}
 	}
 
+	@FeatureFlag("LPD-70673")
+	@Test
+	public void testUpdateObjectEntryWithEmailObjectField() throws Exception {
+		ObjectDefinition objectDefinition = _publishEmailObjectDefinition(
+			false);
+
+		try {
+			ObjectEntry objectEntry = _addObjectEntry(
+				objectDefinition,
+				HashMapBuilder.<String, Serializable>put(
+					"emailField", "user@example.com"
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			objectEntry = _objectEntryLocalService.updateObjectEntry(
+				TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+				objectEntry.getObjectEntryFolderId(),
+				HashMapBuilder.<String, Serializable>put(
+					"emailField", "Admin@Example.com"
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			Assert.assertEquals(
+				"admin@example.com",
+				objectEntry.getValues(
+				).get(
+					"emailField"
+				));
+		}
+		finally {
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				objectDefinition);
+		}
+	}
+
 	@FeatureFlag("LPD-70691")
 	@Test
 	public void testUpdateObjectEntryWithPhoneNumberObjectField()
@@ -7987,6 +8151,31 @@ public class ObjectEntryLocalServiceTest {
 			ContentTypes.TEXT_PLAIN);
 	}
 
+	private void _assertAddObjectEntryWithInvalidEmailAddress(
+			ObjectDefinition objectDefinition, String emailAddress)
+		throws Exception {
+
+		try {
+			_addObjectEntry(
+				objectDefinition,
+				HashMapBuilder.<String, Serializable>put(
+					"emailField", emailAddress
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			Assert.fail();
+		}
+		catch (ObjectEntryValuesException.InvalidEmailAddress
+					objectEntryValuesException) {
+
+			Assert.assertEquals(
+				"emailField", objectEntryValuesException.getObjectFieldName());
+			Assert.assertEquals(
+				"please-enter-a-valid-email-address",
+				objectEntryValuesException.getMessageKey());
+		}
+	}
+
 	private void _assertAddObjectEntryWithInvalidPhoneNumber(
 			ObjectDefinition objectDefinition, String phoneNumber)
 		throws Exception {
@@ -8460,6 +8649,54 @@ public class ObjectEntryLocalServiceTest {
 					"phoneNumberField"
 				).objectFieldSettings(
 					objectFieldSettings
+				).build()));
+	}
+
+	private ObjectDefinition _publishEmailObjectDefinition(boolean uniqueValues)
+		throws Exception {
+
+		return _publishEmailObjectDefinition(
+			Collections.singletonList(
+				new ObjectFieldSettingBuilder(
+				).name(
+					ObjectFieldSettingConstants.NAME_UNIQUE_VALUES
+				).value(
+					String.valueOf(uniqueValues)
+				).build()));
+	}
+
+	private ObjectDefinition _publishEmailObjectDefinition(
+			List<ObjectFieldSetting> objectFieldSettings)
+		throws Exception {
+
+		List<ObjectFieldSetting> emailObjectFieldSettings = new ArrayList<>(
+			objectFieldSettings);
+
+		emailObjectFieldSettings.add(
+			new ObjectFieldSettingBuilder(
+			).name(
+				ObjectFieldSettingConstants.NAME_AUTOCOMPLETE
+			).value(
+				Boolean.TRUE.toString()
+			).build());
+		emailObjectFieldSettings.add(
+			new ObjectFieldSettingBuilder(
+			).name(
+				ObjectFieldSettingConstants.NAME_DOMAINS
+			).value(
+				"liferay.com,gmail.com"
+			).build());
+
+		return _publishCustomObjectDefinition(
+			Collections.singletonList(
+				new EmailObjectFieldBuilder(
+				).labelMap(
+					LocalizedMapUtil.getLocalizedMap(
+						RandomTestUtil.randomString())
+				).name(
+					"emailField"
+				).objectFieldSettings(
+					emailObjectFieldSettings
 				).build()));
 	}
 
