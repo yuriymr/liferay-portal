@@ -13,9 +13,13 @@ public class ObjectFieldSettingConstants {
 	public static final String NAME_ACCEPTED_FILE_EXTENSIONS =
 		"acceptedFileExtensions";
 
+	public static final String NAME_AUTOCOMPLETE = "autocomplete";
+
 	public static final String NAME_DEFAULT_VALUE = "defaultValue";
 
 	public static final String NAME_DEFAULT_VALUE_TYPE = "defaultValueType";
+
+	public static final String NAME_DOMAINS = "domains";
 
 	public static final String NAME_FILE_SOURCE = "fileSource";
 

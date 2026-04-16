@@ -1608,6 +1608,8 @@ public class ObjectFieldLocalServiceImpl
 		if (!oldObjectField.compareBusinessType(businessType)) {
 			_validateBusinessTypeAssignee(
 				newObjectField.getObjectDefinitionId(), businessType);
+			_validateBusinessTypeEmail(
+				newObjectField.getCompanyId(), businessType);
 			_validateBusinessTypePhoneNumber(
 				newObjectField.getCompanyId(), businessType);
 		}
@@ -1743,6 +1745,8 @@ public class ObjectFieldLocalServiceImpl
 			ObjectDefinition objectDefinition, String businessType)
 		throws PortalException {
 
+		_validateBusinessTypeEmail(
+			objectDefinition.getCompanyId(), businessType);
 		_validateBusinessTypePhoneNumber(
 			objectDefinition.getCompanyId(), businessType);
 
@@ -1839,6 +1843,20 @@ public class ObjectFieldLocalServiceImpl
 		}
 		catch (Exception exception) {
 			throw new PortalException(exception);
+		}
+	}
+
+	private void _validateBusinessTypeEmail(long companyId, String businessType)
+		throws ObjectFieldBusinessTypeException {
+
+		if (Objects.equals(
+				businessType, ObjectFieldConstants.BUSINESS_TYPE_EMAIL) &&
+			!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-70673")) {
+
+			_handleException(
+				new ObjectFieldBusinessTypeException(
+					"Business Type Email is disabled"),
+				"businessType", businessType);
 		}
 	}
 

@@ -120,6 +120,12 @@ public class DynamicObjectDefinitionTableUtil {
 		}
 		else if (StringUtil.equals(
 					businessType,
+					ObjectFieldConstants.BUSINESS_TYPE_EMAIL)) {
+
+			return 254;
+		}
+		else if (StringUtil.equals(
+					businessType,
 					ObjectFieldConstants.BUSINESS_TYPE_MULTISELECT_PICKLIST)) {
 
 			if (DBManagerUtil.getDBType() == DBType.SQLSERVER) {
