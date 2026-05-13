@@ -5,6 +5,7 @@
 
 package com.liferay.portal.workflow.definition.groovy.script.use;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -32,31 +33,54 @@ public class WorkflowDefinitionGroovyScriptUseDetector {
 		while (!queue.isEmpty()) {
 			Map<String, Object> map = queue.poll();
 
-			for (Map.Entry<String, Object> entry : map.entrySet()) {
-				if (entry.getValue() instanceof List) {
-					if (Objects.equals(entry.getKey(), "#cdata-value")) {
-						continue;
-					}
+			if (Objects.equals(map.get("#tag-name"), "script-language")) {
+				String scriptLanguage = _extractScriptLanguage(map);
 
-					queue.addAll((List<Map<String, Object>>)entry.getValue());
+				if (Objects.equals(scriptLanguage, "groovy") ||
+					Objects.equals(scriptLanguage, "java")) {
+
+					return true;
 				}
-				else if (map.size() == 2) {
-					if (!Objects.equals(
-							map.get("#tag-name"), "script-language")) {
+			}
 
-						continue;
-					}
+			for (Map.Entry<String, Object> entry : map.entrySet()) {
+				if (Objects.equals(entry.getKey(), "#cdata-value")) {
+					continue;
+				}
 
-					if (Objects.equals(map.get("#value"), "groovy") ||
-						Objects.equals(map.get("#value"), "java")) {
-
-						return true;
-					}
+				if (entry.getValue() instanceof List) {
+					queue.addAll((List<Map<String, Object>>)entry.getValue());
 				}
 			}
 		}
 
 		return false;
+	}
+
+	private static String _extractScriptLanguage(Map<String, Object> map) {
+		Object value = map.get("#value");
+
+		if (value instanceof String) {
+			String string = (String)value;
+
+			return string.trim();
+		}
+
+		Object cdataValue = map.get("#cdata-value");
+
+		if (cdataValue instanceof List) {
+			StringBundler sb = new StringBundler();
+
+			for (Object line : (List<?>)cdataValue) {
+				sb.append(line);
+			}
+
+			String string = sb.toString();
+
+			return string.trim();
+		}
+
+		return null;
 	}
 
 }
