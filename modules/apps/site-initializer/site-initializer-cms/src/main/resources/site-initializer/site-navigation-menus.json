@@ -123,6 +123,13 @@
 						"friendlyURL": "/categorization",
 						"privateLayout": false,
 						"type": "layout"
+					},
+					{
+						"displayIcon": "sheets",
+						"externalReferenceCode": "CMSPRIMARYNAVIGATION11",
+						"friendlyURL": "/objects-list",
+						"privateLayout": false,
+						"type": "layout"
 					}
 				],
 				"name_i18n": {

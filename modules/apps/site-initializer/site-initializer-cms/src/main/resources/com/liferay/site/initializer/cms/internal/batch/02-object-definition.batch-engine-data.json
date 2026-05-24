@@ -315,6 +315,108 @@
 			"titleObjectFieldName": "title"
 		},
 		{
+			"enableCategorization": true,
+			"enableComments": true,
+			"enableFriendlyURLCustomization": true,
+			"enableIndexSearch": true,
+			"enableLocalization": true,
+			"enableObjectEntryDraft": true,
+			"enableObjectEntryHistory": true,
+			"enableObjectEntrySchedule": true,
+			"enableObjectEntryVersioning": true,
+			"externalReferenceCode": "L_CMS_TEAM",
+			"label": {
+				"en_US": "Team"
+			},
+			"modifiable": true,
+			"name": "CMSTeams",
+			"objectDefinitionSettings": [
+				{
+					"name": "acceptAllGroups",
+					"value": "true"
+				},
+				{
+					"name": "visible",
+					"value": "true"
+				}
+			],
+			"objectFields": [
+				{
+					"externalReferenceCode": "TITLE",
+					"name": "title",
+					"label": { "en_US": "Title" },
+					"businessType": "Text",
+					"DBType": "String",
+					"type": "String",
+					"localized": true,
+					"required": true,
+					"system": true,
+					"indexed": true,
+					"indexedAsKeyword": false,
+					"indexedLanguageId": "en_US",
+					"readOnly": "false",
+					"readOnlyConditionExpression": "",
+					"defaultValue": "null",
+					"unique": false,
+					"state": false,
+					"objectFieldSettings": []
+				},
+				{
+					"externalReferenceCode": "DESCRIPTION",
+					"name": "description",
+					"label": { "en_US": "Description" },
+					"businessType": "LongText",
+					"DBType": "Clob",
+					"type": "Clob",
+					"localized": true,
+					"required": false,
+					"system": false,
+					"indexed": true,
+					"indexedAsKeyword": false,
+					"indexedLanguageId": "en_US",
+					"readOnly": "false",
+					"readOnlyConditionExpression": "",
+					"defaultValue": "null",
+					"unique": false,
+					"state": false,
+					"objectFieldSettings": []
+				},
+				{
+					"externalReferenceCode": "SIZE",
+					"name": "size",
+					"label": { "en_US": "Size" },
+					"businessType": "Integer",
+					"DBType": "Integer",
+					"type": "Integer",
+					"localized": false,
+					"required": false,
+					"system": false,
+					"indexed": true,
+					"indexedAsKeyword": false,
+					"indexedLanguageId": "",
+					"readOnly": "false",
+					"readOnlyConditionExpression": "",
+					"defaultValue": "null",
+					"unique": false,
+					"state": false,
+					"objectFieldSettings": []
+				}
+			],
+			"objectFolderExternalReferenceCode": "L_CMS_CONTENT_STRUCTURES",
+			"panelCategoryKey": "",
+			"parameterRequired": false,
+			"pluralLabel": {
+				"en_US": "Basic Web Contents"
+			},
+			"portlet": false,
+			"scope": "depot",
+			"status": {
+				"code": 0
+			},
+			"system": true,
+			"titleObjectFieldName": "title"
+		},
+		{
 			"className": "com.liferay.object.model.ObjectDefinition#H4T4",
 			"enableCategorization": true,
 			"enableComments": true,

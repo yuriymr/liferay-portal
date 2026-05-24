@@ -183,6 +183,8 @@ public class ObjectDefinitionUtil {
 		).put(
 			"CMSBlog", "/cms/blogs"
 		).put(
+			"CMSTeams", "/cms/teams"
+		).put(
 			"CMSBulkActionTask", "/cms/bulk-action-tasks"
 		).put(
 			"CMSDefaultPermission", "/cms/default-permissions"

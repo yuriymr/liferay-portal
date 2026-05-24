@@ -926,6 +926,12 @@ public class ActionUtil {
 			GroupConstants.CMS_FRIENDLY_URL, "/recycle-bin");
 	}
 
+	public static String getObjectsSectionURL(ThemeDisplay themeDisplay){
+		return StringBundler.concat(
+			themeDisplay.getPathFriendlyURLPublic(),
+			GroupConstants.CMS_FRIENDLY_URL, "/objects-list");
+	}
+
 	public static String getSpaceSettingsURL(
 		long classPK, String redirectURL, ThemeDisplay themeDisplay) {
 
