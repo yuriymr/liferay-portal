@@ -2789,7 +2789,7 @@ public class ObjectEntryLocalServiceTest {
 			Collections.singletonList(
 				new ObjectFieldSettingBuilder(
 				).name(
-					ObjectFieldSettingConstants.NAME_PREFIX_TYPE
+					ObjectFieldSettingConstants.NAME_COUNTRY_TYPE
 				).value(
 					ObjectFieldSettingConstants.VALUE_DEFINED_BY_USER
 				).build())
@@ -3540,7 +3540,7 @@ public class ObjectEntryLocalServiceTest {
 			Collections.singletonList(
 				new ObjectFieldSettingBuilder(
 				).name(
-					ObjectFieldSettingConstants.NAME_PREFIX_TYPE
+					ObjectFieldSettingConstants.NAME_COUNTRY_TYPE
 				).value(
 					ObjectFieldSettingConstants.VALUE_DEFINED_BY_USER
 				).build())
@@ -3597,13 +3597,13 @@ public class ObjectEntryLocalServiceTest {
 				Arrays.asList(
 					new ObjectFieldSettingBuilder(
 					).name(
-						ObjectFieldSettingConstants.NAME_PREFIX
+						ObjectFieldSettingConstants.NAME_COUNTRY
 					).value(
-						"+1"
+						"US"
 					).build(),
 					new ObjectFieldSettingBuilder(
 					).name(
-						ObjectFieldSettingConstants.NAME_PREFIX_TYPE
+						ObjectFieldSettingConstants.NAME_COUNTRY_TYPE
 					).value(
 						ObjectFieldSettingConstants.VALUE_FIXED
 					).build())
@@ -3646,7 +3646,7 @@ public class ObjectEntryLocalServiceTest {
 				Arrays.asList(
 					new ObjectFieldSettingBuilder(
 					).name(
-						ObjectFieldSettingConstants.NAME_PREFIX_TYPE
+						ObjectFieldSettingConstants.NAME_COUNTRY_TYPE
 					).value(
 						ObjectFieldSettingConstants.VALUE_DEFINED_BY_USER
 					).build(),
@@ -7395,7 +7395,7 @@ public class ObjectEntryLocalServiceTest {
 					Collections.singletonList(
 						new ObjectFieldSettingBuilder(
 						).name(
-							ObjectFieldSettingConstants.NAME_PREFIX_TYPE
+							ObjectFieldSettingConstants.NAME_COUNTRY_TYPE
 						).value(
 							ObjectFieldSettingConstants.VALUE_DEFINED_BY_USER
 						).build())

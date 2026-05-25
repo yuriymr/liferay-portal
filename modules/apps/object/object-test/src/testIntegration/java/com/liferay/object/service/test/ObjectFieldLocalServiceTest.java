@@ -2628,7 +2628,7 @@ public class ObjectFieldLocalServiceTest {
 					).build(),
 					new ObjectFieldSettingBuilder(
 					).name(
-						ObjectFieldSettingConstants.NAME_PREFIX_TYPE
+						ObjectFieldSettingConstants.NAME_COUNTRY_TYPE
 					).value(
 						ObjectFieldSettingConstants.VALUE_DEFINED_BY_USER
 					).build())
@@ -2637,13 +2637,13 @@ public class ObjectFieldLocalServiceTest {
 		_assertObjectFieldSettingsValues(
 			phoneNumberObjectField.getObjectFieldId(),
 			HashMapBuilder.put(
+				ObjectFieldSettingConstants.NAME_COUNTRY_TYPE,
+				ObjectFieldSettingConstants.VALUE_DEFINED_BY_USER
+			).put(
 				ObjectFieldSettingConstants.NAME_DEFAULT_VALUE, defaultValue
 			).put(
 				ObjectFieldSettingConstants.NAME_DEFAULT_VALUE_TYPE,
 				ObjectFieldSettingConstants.VALUE_INPUT_AS_VALUE
-			).put(
-				ObjectFieldSettingConstants.NAME_PREFIX_TYPE,
-				ObjectFieldSettingConstants.VALUE_DEFINED_BY_USER
 			).build());
 
 		_assertObjectEntryDefaultValue(
@@ -2652,6 +2652,18 @@ public class ObjectFieldLocalServiceTest {
 		_addOrUpdateCustomObjectField(
 			phoneNumberObjectField,
 			Arrays.asList(
+				new ObjectFieldSettingBuilder(
+				).name(
+					ObjectFieldSettingConstants.NAME_COUNTRY
+				).value(
+					"US"
+				).build(),
+				new ObjectFieldSettingBuilder(
+				).name(
+					ObjectFieldSettingConstants.NAME_COUNTRY_TYPE
+				).value(
+					ObjectFieldSettingConstants.VALUE_FIXED
+				).build(),
 				new ObjectFieldSettingBuilder(
 				).name(
 					ObjectFieldSettingConstants.NAME_DEFAULT_VALUE
@@ -2663,32 +2675,20 @@ public class ObjectFieldLocalServiceTest {
 					ObjectFieldSettingConstants.NAME_DEFAULT_VALUE_TYPE
 				).value(
 					ObjectFieldSettingConstants.VALUE_INPUT_AS_VALUE
-				).build(),
-				new ObjectFieldSettingBuilder(
-				).name(
-					ObjectFieldSettingConstants.NAME_PREFIX
-				).value(
-					"+1"
-				).build(),
-				new ObjectFieldSettingBuilder(
-				).name(
-					ObjectFieldSettingConstants.NAME_PREFIX_TYPE
-				).value(
-					ObjectFieldSettingConstants.VALUE_FIXED
 				).build()));
 
 		_assertObjectFieldSettingsValues(
 			phoneNumberObjectField.getObjectFieldId(),
 			HashMapBuilder.put(
+				ObjectFieldSettingConstants.NAME_COUNTRY, "US"
+			).put(
+				ObjectFieldSettingConstants.NAME_COUNTRY_TYPE,
+				ObjectFieldSettingConstants.VALUE_FIXED
+			).put(
 				ObjectFieldSettingConstants.NAME_DEFAULT_VALUE, "5551234567"
 			).put(
 				ObjectFieldSettingConstants.NAME_DEFAULT_VALUE_TYPE,
 				ObjectFieldSettingConstants.VALUE_INPUT_AS_VALUE
-			).put(
-				ObjectFieldSettingConstants.NAME_PREFIX, "+1"
-			).put(
-				ObjectFieldSettingConstants.NAME_PREFIX_TYPE,
-				ObjectFieldSettingConstants.VALUE_FIXED
 			).build());
 
 		_assertObjectEntryDefaultValue(
